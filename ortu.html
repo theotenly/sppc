@@ -394,6 +394,7 @@ async function loadOrtuPay(murid) {
   try { const t = await sb.from('tarif').select('grup').eq('nama', murid.nama).limit(1); if (t.data && t.data[0] && t.data[0].grup && String(t.data[0].grup).trim()) target = String(t.data[0].grup).trim(); } catch (e) {}
   let invs = [];
   try { invs = (await sb.from('invoice').select('id,kode,bulan,total,lunas,bukti_url,items,target').eq('target', target).order('bulan', { ascending: false })).data || []; } catch (e) { el.innerHTML = ''; ortuInvs = []; setupOrtuTabs(); return; }
+  invs = invs.slice(0, 1); // hanya tampilkan invoice bulan terbaru
   ortuInvs = invs;
   if (!invs.length) { el.innerHTML = ''; setupOrtuTabs(); return; }
   const tsafe = String(target).replace(/'/g, "\\'");
