@@ -2026,7 +2026,7 @@ let invCurrent = null;
 let invLines = [];
 let invTarif = {};
 
-function invSesi(m) { return (Number(m.laporan) || 0) > 0 ? Number(m.laporan) : (Number(m.hadir) || 0); }
+function invSesi(m) { return Number(m.hadir) || 0; }
 function fmtRp(n) { return 'Rp ' + (Number(n) || 0).toLocaleString('id-ID'); }
 function waNorm(raw) { var s = String(raw || '').trim(); var intl = s.charAt(0) === '+'; var d = s.replace(/[^0-9]/g, ''); if (!d) return ''; if (intl) return d; if (d.charAt(0) === '0') return '62' + d.slice(1); return d; }
 function buktiLink(iv) { return iv && iv.bukti_url ? ' · <a href="' + iv.bukti_url + '" target="_blank" onclick="event.stopPropagation()" style="color:#1a7f4b">📎 bukti</a>' : ''; }
