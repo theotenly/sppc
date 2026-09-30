@@ -60,6 +60,9 @@
   .stat-label { font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); font-weight: 500; }
 
   /* Latest badge */
+  .fam-chips { display:flex; flex-wrap:wrap; gap:8px; margin:0 0 12px; }
+  .fam-chip { border:1px solid var(--accent); background:#fff; color:var(--ink); border-radius:999px; padding:7px 16px; font-size:14px; font-weight:600; cursor:pointer; font-family:inherit; }
+  .fam-chip.active { background:#4a0d1a; color:#fff; border-color:#4a0d1a; }
   .latest-badge { display: inline-flex; align-items: center; gap: 6px; background: var(--accent-light); color: var(--ink); border: 1px solid var(--accent); border-radius: 6px; padding: 3px 10px; font-size: 11px; font-weight: 500; margin-bottom: 1.25rem; }
 
   /* Laporan cards */
@@ -267,6 +270,43 @@ function ortuGoto(d) {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
+// ── Keluarga / grup: satu link bisa lihat laporan semua anggota grup ──
+let ORTU_FAM = [];
+async function loadFamily(murid, laporan) {
+  ORTU_FAM = [{ murid: murid, laporan: laporan }];
+  try {
+    const t = await sb.from('tarif').select('grup').ilike('nama', String(murid.nama).trim()).limit(1);
+    const grup = t.data && t.data[0] && String(t.data[0].grup || '').trim();
+    if (!grup) return;
+    const g = await sb.from('tarif').select('nama').eq('grup', grup);
+    const names = (g.data || []).map(function (x) { return String(x.nama).trim().toLowerCase(); });
+    const all = await sb.from('murid').select('*');
+    const others = (all.data || []).filter(function (m) { return m.id !== murid.id && names.indexOf(String(m.nama).trim().toLowerCase()) >= 0; });
+    if (!others.length) return;
+    const ids = others.map(function (m) { return m.id; });
+    const lr = await sb.from('laporan').select('*').in('murid_id', ids);
+    others.sort(function (a, b) { return String(a.nama).localeCompare(String(b.nama)); }).forEach(function (m) {
+      ORTU_FAM.push({ murid: m, laporan: (lr.data || []).filter(function (l) { return l.murid_id === m.id; }) });
+    });
+  } catch (e) {}
+}
+function famChipsHTML() {
+  if (ORTU_FAM.length < 2) return '';
+  return '<div class="fam-chips" id="fam-chips">' + ORTU_FAM.map(function (f, i) {
+    return '<button class="fam-chip' + (i === 0 ? ' active' : '') + '" onclick="pilihAnak(' + i + ')">' + f.murid.nama + '</button>';
+  }).join('') + '</div>';
+}
+function pilihAnak(i) {
+  const f = ORTU_FAM[i]; if (!f) return;
+  ortuSorted = [...f.laporan].sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal));
+  ortuPage = 1;
+  const nm = document.querySelector('.student-name'); if (nm) nm.textContent = f.murid.nama;
+  const bd = document.getElementById('latest-badge'); if (bd) { bd.textContent = ortuSorted.length ? availMsg(ortuSorted.length) : ''; bd.style.display = ortuSorted.length ? '' : 'none'; }
+  document.querySelectorAll('.fam-chip').forEach(function (b, j) { b.classList.toggle('active', j === i); });
+  document.title = 'Progress ' + f.murid.nama + ' — SPPC';
+  renderOrtuLaporan();
+}
+
 function renderPage(murid, laporan) {
   const sorted = [...laporan].sort((a,b) => new Date(b.tanggal) - new Date(a.tanggal));
   const totalLaporan = sorted.length;
@@ -306,7 +346,8 @@ ortuSorted = sorted;
         <button class="ortu-tab" id="ot-bayar" onclick="showOrtuTab('bayar')">${tr('tab_bayar')}</button>
       </div>
       <div id="tab-laporan">
-        ${sorted.length > 0 ? `<div class="latest-badge">${availMsg(sorted.length)}</div>` : ''}
+        ${famChipsHTML()}
+        <div class="latest-badge" id="latest-badge" style="${sorted.length ? '' : 'display:none'}">${sorted.length ? availMsg(sorted.length) : ''}</div>
         <div id="laporan-container"></div>
       </div>
       <div id="tab-bayar" style="display:none">
@@ -377,7 +418,7 @@ function showOrtuTab(name) {
 
 function setupOrtuTabs() {
   const bar = document.getElementById('ortu-tabs'); if (!bar) return;
-  const hasLap = ortuSorted.length > 0;
+  const hasLap = ortuSorted.length > 0 || ORTU_FAM.length > 1;
   const hasBay = ortuInvs.length > 0;
   const tL = document.getElementById('ot-laporan'), tB = document.getElementById('ot-bayar');
   if (tL) tL.style.display = hasLap ? '' : 'none';
@@ -475,6 +516,7 @@ async function init() {
     try { document.getElementById('lang-toggle').textContent = LANG === 'id' ? 'EN' : 'ID'; } catch (e) {}
     const lr = await sb.from('laporan').select('*').eq('murid_id', murid.id);
     if (lr.error) throw new Error(lr.error.message);
+    await loadFamily(murid, lr.data || []);
     renderPage(murid, lr.data || []);
   } catch(e) {
     renderError(tr('err2'));
