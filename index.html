@@ -370,7 +370,6 @@
     <button class="home-btn" onclick="enterGroup('murid')"><span class="home-ic">👥</span><span>Murid</span></button>
     <button class="home-btn" onclick="enterGroup('notangka')"><span class="home-ic">🎼</span><span>Not Angka</span></button>
   </div>
-  <div id="home-stats" class="home-stats"></div>
 </div>
 
 <div class="tab-bar" id="group-bar">
@@ -1414,7 +1413,6 @@ async function backupData() {
 function goHome() {
   document.body.classList.add('home-active');
   document.querySelectorAll('.page').forEach(function (p) { p.classList.remove('active'); });
-  loadHomeStats();
 }
 
 function enterGroup(group) {
