@@ -316,6 +316,26 @@
     .mr-empty{padding:10px 12px;font-size:13px;color:var(--muted)}
     .rekom-chip{background:var(--cream);border:1px solid var(--border);border-radius:20px;padding:6px 12px;font-size:12.5px;cursor:pointer;color:var(--ink)}
     .rekom-chip.active{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+.prev-notes-box{background:#faf6ee;border:1px solid #ecdfc4;border-radius:10px;padding:8px 10px;margin-bottom:10px}
+.pn-title{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
+.pn-row{display:flex;gap:10px;padding:5px 0;border-top:1px dashed #ecdfc4;font-size:12.5px}
+.pn-row:first-of-type{border-top:none}
+.pn-tgl{min-width:48px;font-weight:700;color:#4a0d1a}
+.pn-isi{white-space:pre-wrap;line-height:1.45}
+.prev-wa-toggle{margin:4px 0 12px}
+.prev-wa-toggle>summary{cursor:pointer;font-size:13px;color:var(--muted);padding:6px 2px}
+.lap-month-nav{display:flex;align-items:center;justify-content:center;gap:14px;margin-bottom:10px}
+.lap-month-nav button{border:1px solid #ddd;background:#fff;border-radius:8px;width:34px;height:30px;font-size:16px;cursor:pointer}
+.lap-month-nav button:disabled{opacity:.35;cursor:default}
+.lap-table{width:100%;border-collapse:collapse;font-size:13px;table-layout:fixed}
+.lap-table th{background:#faf6ee;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);padding:7px 8px;border:1px solid #e8e0d0;text-align:left}
+.lap-table td{border:1px solid #e8e0d0;padding:8px;vertical-align:top}
+.lap-tgl{font-weight:700;color:#4a0d1a;white-space:nowrap}
+.lap-isi{white-space:pre-wrap;line-height:1.45;word-break:break-word}
+.lap-act{text-align:center;white-space:nowrap}
+.lap-act button{background:none;border:none;cursor:pointer;font-size:14px;padding:2px 3px;opacity:.7}
+.lap-act button:hover{opacity:1}
+.lap-edit td{background:#fffaf0}
 </style>
 </head>
 <body>
@@ -394,9 +414,10 @@
           <div class="section-title">Materi Belajar</div>
         </div>
       </div>
+      <div id="prev-notes"></div>
       <div class="field">
-        <label>Materi yang Dipelajari</label>
-        <textarea id="materi" placeholder="cth. Chord C, F, G — fingering tangan kanan, tangga nada C mayor" oninput="updatePreview()" style="min-height:120px"></textarea>
+        <label>Catatan hari ini <span style="font-weight:400;color:var(--muted)">· 1 baris per poin</span></label>
+        <textarea id="materi" placeholder="5 finger ex di Bb 2 oct&#10;Diatonic seventh chord di Bb&#10;Merry go round 135 - 153" oninput="updatePreview()" onkeydown="if((event.ctrlKey||event.metaKey)&&event.key==='Enter'){event.preventDefault();submitLaporan();}" style="min-height:110px;font-size:14px;line-height:1.5"></textarea>
       </div>
     </div>
 
@@ -412,6 +433,7 @@
       <div class="laporan-list" id="laporan-list"></div>
     </div>
 
+    <details class="prev-wa-toggle"><summary>👁 Lihat preview pesan WA</summary>
     <div class="preview-wrap">
       <div class="preview-header">
         <span>Preview Pesan WA</span>
@@ -419,6 +441,7 @@
       </div>
       <pre id="preview">Pilih murid dan isi form untuk melihat preview...</pre>
     </div>
+    </details>
 
     <div class="btn-row">
       <button class="btn btn-outline" onclick="copyMsg()" id="btn-copy">
@@ -2309,6 +2332,7 @@ function onSelectMurid() {
   const id = _val;
   const info = document.getElementById('selected-info');
   const riwayat = document.getElementById('riwayat-section');
+  { const pn = document.getElementById('prev-notes'); if (pn) pn.innerHTML = ''; }
   if (!id) { info.classList.remove('show'); riwayat.style.display = 'none'; updatePreview(); return; }
   const s = students.find(x => x.id === id);
   if (!s) return;
@@ -2339,55 +2363,60 @@ async function loadLaporan(muridId) {
   }
 }
 
+function lapEsc(t) { return String(t == null ? '' : t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function lapBulanLabel(ym) { const M=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember']; return M[parseInt(ym.slice(5,7),10)-1] + ' ' + ym.slice(0,4); }
+function lapTglPendek(t) { const d = new Date(String(t).slice(0,10) + 'T00:00:00'); const M=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des']; return d.getDate() + ' ' + M[d.getMonth()]; }
+
+function renderPrevNotes(sorted) {
+  const el = document.getElementById('prev-notes'); if (!el) return;
+  const last = sorted.slice(0, 2);
+  if (!last.length) { el.innerHTML = ''; return; }
+  el.innerHTML = '<div class="prev-notes-box"><div class="pn-title">📖 Catatan sebelumnya</div>' + last.map(function (l) {
+    return '<div class="pn-row"><div class="pn-tgl">' + lapTglPendek(l.tanggal) + '</div><div class="pn-isi">' + lapEsc(l.materi || '—') + '</div></div>';
+  }).join('') + '</div>';
+}
+
 function renderLaporan(muridId) {
   const list = laporanCache[muridId] || [];
   const sorted = [...list].sort((a,b) => new Date(b.tanggal) - new Date(a.tanggal));
   const el = document.getElementById('laporan-list');
   document.getElementById('riwayat-count').textContent = `${sorted.length} laporan`;
+  renderPrevNotes(sorted);
   if (!sorted.length) {
     el.innerHTML = '<div class="empty"><div class="empty-icon">📋</div><div>Belum ada laporan.</div></div>';
     return;
   }
-  const PER = 5;
-  const pages = Math.ceil(sorted.length / PER);
+  // kelompokkan per bulan, 1 halaman = 1 bulan
+  const months = [];
+  sorted.forEach(function (l) { const ym = String(l.tanggal).slice(0,7); if (months.indexOf(ym) < 0) months.push(ym); });
+  const pages = months.length;
   if (laporanPageNo > pages) laporanPageNo = pages;
   if (laporanPageNo < 1) laporanPageNo = 1;
-  const start = (laporanPageNo - 1) * PER;
-  const items = sorted.slice(start, start + PER);
-  const cards = items.map(l => {
-    const editing = l.id === editingLaporanId;
-    const body = editing
-      ? `<div class="laporan-card-body open" style="padding:12px 14px">
-           <div class="field" style="margin-bottom:8px"><label>Tanggal</label><input type="date" id="edit-lap-tgl" value="${String(l.tanggal || '').slice(0,10)}"></div>
-           <div class="field"><label>Materi Belajar</label><textarea id="edit-lap-materi" style="min-height:90px">${l.materi || ''}</textarea></div>
-           <div style="display:flex;gap:8px;margin-top:10px">
-             <button class="btn-sm primary" onclick="saveLaporanEdit('${l.id}','${muridId}')">Simpan</button>
-             <button class="btn-sm" onclick="cancelLaporanEdit('${muridId}')">Batal</button>
-           </div>
-         </div>`
-      : `<div class="laporan-card-body">
-           <div class="laporan-row"><div class="laporan-row-label">🎹 Materi Belajar</div><div class="laporan-row-val">${l.materi || '—'}</div></div>
-         </div>`;
-    return `<div class="laporan-card">
-      <div class="laporan-card-header${editing ? ' open' : ''}" onclick="toggleLaporan(this)">
-        <span class="laporan-date">📅 ${formatTgl(l.tanggal)}</span>
-        <div style="display:flex;align-items:center;gap:8px">
-          <button class="btn-sm" style="padding:4px 10px;font-size:12px" onclick="event.stopPropagation();editLaporan('${l.id}','${muridId}')">Edit</button>
-          <button class="btn-sm danger" style="padding:4px 10px;font-size:12px" onclick="event.stopPropagation();deleteLaporan('${l.id}','${muridId}')">Hapus</button>
-          <span class="chevron">▼</span>
-        </div>
-      </div>
-      ${body}
-    </div>`;
+  const ym = months[laporanPageNo - 1];
+  const rows = sorted.filter(function (l) { return String(l.tanggal).slice(0,7) === ym; })
+    .sort(function (a, b) { return new Date(a.tanggal) - new Date(b.tanggal); });
+  const body = rows.map(function (l) {
+    if (l.id === editingLaporanId) {
+      return `<tr class="lap-edit"><td colspan="3">
+          <input type="date" id="edit-lap-tgl" value="${String(l.tanggal || '').slice(0,10)}" style="margin-bottom:6px">
+          <textarea id="edit-lap-materi" style="min-height:90px;font-size:13px">${lapEsc(l.materi || '')}</textarea>
+          <div style="display:flex;gap:8px;margin-top:8px">
+            <button class="btn-sm primary" onclick="saveLaporanEdit('${l.id}','${muridId}')">Simpan</button>
+            <button class="btn-sm" onclick="cancelLaporanEdit('${muridId}')">Batal</button>
+          </div></td></tr>`;
+    }
+    return `<tr>
+        <td class="lap-tgl">${lapTglPendek(l.tanggal)}</td>
+        <td class="lap-isi">${lapEsc(l.materi || '—')}</td>
+        <td class="lap-act"><button title="Edit" onclick="editLaporan('${l.id}','${muridId}')">✏️</button><button title="Hapus" onclick="deleteLaporan('${l.id}','${muridId}')">🗑</button></td>
+      </tr>`;
   }).join('');
-  const nav = pages > 1
-    ? `<div class="pager">
-         <button ${laporanPageNo <= 1 ? 'disabled' : ''} onclick="gotoLaporanPage('${muridId}',-1)">‹ Sebelumnya</button>
-         <span>Hal ${laporanPageNo} / ${pages}</span>
-         <button ${laporanPageNo >= pages ? 'disabled' : ''} onclick="gotoLaporanPage('${muridId}',1)">Berikutnya ›</button>
-       </div>`
-    : '';
-  el.innerHTML = cards + nav;
+  const nav = `<div class="lap-month-nav">
+      <button ${laporanPageNo >= pages ? 'disabled' : ''} onclick="gotoLaporanPage('${muridId}',1)">‹</button>
+      <strong>${lapBulanLabel(ym)}</strong>
+      <button ${laporanPageNo <= 1 ? 'disabled' : ''} onclick="gotoLaporanPage('${muridId}',-1)">›</button>
+    </div>`;
+  el.innerHTML = nav + `<table class="lap-table"><thead><tr><th style="width:62px">Tanggal</th><th>Catatan</th><th style="width:58px"></th></tr></thead><tbody>${body}</tbody></table>`;
 }
 
 function gotoLaporanPage(muridId, delta) {
