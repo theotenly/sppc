@@ -340,6 +340,7 @@
 .lap-act button{background:none;border:none;cursor:pointer;font-size:14px;padding:2px 3px;opacity:.7}
 .lap-act button:hover{opacity:1}
 .lap-edit td{background:#fffaf0}
+.rekom-chip.rekom-all{background:#4a0d1a;color:#fff;border-color:#4a0d1a;font-weight:700}
 </style>
 </head>
 <body>
@@ -456,7 +457,7 @@
         Kirim WA
       </button>
       <button class="btn btn-submit" onclick="submitLaporan()" id="btn-submit">
-        💾 Simpan & Kirim Laporan
+        💾 Simpan & Kirim WA
       </button>
     </div>
   </div>
@@ -1102,7 +1103,7 @@ async function _sha256hex(str) { const b = await crypto.subtle.digest('SHA-256',
 async function unlockSPPC() {
   const v = document.getElementById('gate-pass').value || '';
   const h = await _sha256hex(v);
-  if (h === GATE_HASH) { try { localStorage.setItem('sppc_auth', GATE_HASH); } catch (e) {} document.getElementById('gate').classList.add('ok'); }
+  if (h === GATE_HASH) { try { localStorage.setItem('sppc_auth', GATE_HASH); } catch (e) {} document.getElementById('gate').classList.add('ok'); if (typeof autoBackupBulanan === 'function') autoBackupBulanan(); }
   else { document.getElementById('gate-err').textContent = 'Password salah'; document.getElementById('gate-pass').value = ''; }
 }
 function _initGate() {
@@ -1379,6 +1380,12 @@ function waNotangka(id) {
     msg = 'Halo' + (o.nama ? ' ' + o.nama : '') + ' :)\n\nTerima kasih sudah memesan not angka' + (o.detail ? ' (' + o.detail + ')' : '') + ' di notangkain.id. Mau follow up ya — apakah ada yang bisa kami bantu lagi, atau ingin pesan not angka lainnya?\n\nTerima kasih';
   }
   window.open('https://wa.me/' + waNorm(o.wa) + '?text=' + encodeURIComponent(msg), '_blank');
+  // otomatis tandai follow-up selesai kalau memang sudah jatuh tempo
+  if (!o.done && !o.silent && !o.dikerjakan && (o.step || 0) < NA_OFFSETS.length) {
+    const base = o.tgl_selesai || o.tgl_order;
+    const due = naIso(naAddOffset(base, NA_OFFSETS[o.step || 0]));
+    if (due <= todayISO()) tickNotangka(id);
+  }
 }
 
 async function loadHomeStats() {
@@ -1650,9 +1657,20 @@ async function loadRekomAbsensi(tgl) {
   const hari = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'][new Date(base + 'T00:00:00').getDay()];
   el.innerHTML = '<div style="font-size:11px;font-weight:500;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin-bottom:6px">Rekomendasi (' + hari + ' minggu lalu) &middot; tap untuk tandai hadir</div>'
     + '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px">'
+    + '<button type="button" class="rekom-chip rekom-all" onclick="rekomSemua()">✓ Semua hadir</button>'
     + names.map(function (n) { const nm = String(n).replace(/'/g, "\\'"); return '<button type="button" class="rekom-chip" data-nama="' + String(n).replace(/"/g, '&quot;') + '" onclick="rekomToggle(\'' + nm + '\')">+ ' + n + '</button>'; }).join('')
     + '</div>';
   syncRekomChips();
+}
+
+function rekomSemua() {
+  const chips = Array.prototype.slice.call(document.querySelectorAll('.rekom-chip[data-nama]'));
+  const inps = chips.map(function (ch) { return document.querySelector('.absensi-inp[data-nama="' + ch.getAttribute('data-nama') + '"][data-jenis="hadir"]'); }).filter(Boolean);
+  const allOn = inps.length && inps.every(function (i) { return (Number(i.value) || 0) > 0; });
+  inps.forEach(function (i) { i.value = allOn ? 0 : 1; });
+  updateMarkedList();
+  syncRekomChips();
+  showToast(allOn ? 'Semua dibatalkan' : ('✓ ' + inps.length + ' murid ditandai hadir — jangan lupa Simpan'));
 }
 
 function rekomToggle(nama) {
@@ -1664,7 +1682,7 @@ function rekomToggle(nama) {
 }
 
 function syncRekomChips() {
-  document.querySelectorAll('.rekom-chip').forEach(function (ch) {
+  document.querySelectorAll('.rekom-chip[data-nama]').forEach(function (ch) {
     const nm = ch.getAttribute('data-nama');
     const inp = document.querySelector('.absensi-inp[data-nama="' + nm + '"][data-jenis="hadir"]');
     const on = !!(inp && (Number(inp.value) || 0) > 0);
@@ -2478,6 +2496,13 @@ async function submitLaporan() {
   const btn = document.getElementById('btn-submit');
   btn.disabled = true;
   btn.innerHTML = '<div class="spinner"></div> Menyimpan...';
+  // siapkan WA: buka tab sekarang (saat klik) supaya tidak diblokir popup
+  let waWin = null, waUrl = '';
+  if (s.wa) {
+    let wa = waNorm(s.wa); if (wa.startsWith('0')) wa = '62' + wa.slice(1);
+    waUrl = `https://wa.me/${wa}?text=${encodeURIComponent(buildMsg())}`;
+    try { waWin = window.open('', '_blank'); } catch (e) { waWin = null; }
+  }
 
   try {
     const result = await apiPost({
@@ -2490,15 +2515,21 @@ async function submitLaporan() {
     if (!laporanCache[s.id]) laporanCache[s.id] = [];
     laporanCache[s.id].push({ id: result.id, murid_id: s.id, tanggal: getTglInput(), materi });
     renderLaporan(s.id);
-    showToast('✓ Laporan berhasil disimpan!');
+    if (waUrl) {
+      if (waWin && !waWin.closed) waWin.location.href = waUrl;
+      else window.open(waUrl, '_blank');
+    }
+    showToast('✓ Laporan disimpan' + (waUrl ? ' · WA dibuka' : ''));
+    waWin = null;
     // clear form
     ['materi'].forEach(id => document.getElementById(id).value = '');
     updatePreview();
   } catch(e) {
+    try { if (waWin && !waWin.closed) waWin.close(); } catch (e2) {}
     showToast('⚠ Gagal simpan: ' + e.message);
   } finally {
     btn.disabled = false;
-    btn.innerHTML = '💾 Simpan & Kirim Laporan';
+    btn.innerHTML = '💾 Simpan & Kirim WA';
   }
 }
 
@@ -2657,6 +2688,20 @@ _initGate();
 loadConfig();
 loadDurasi();
 goHome();
+// ── Backup otomatis: sekali per bulan saat dashboard dibuka ──
+function autoBackupBulanan() {
+  try {
+    const bln = todayISO().slice(0, 7);
+    if (localStorage.getItem('sppc_auth') !== GATE_HASH) return;
+    if (localStorage.getItem('sppc_last_backup') === bln) return;
+    setTimeout(async function () {
+      if (document.hidden) return;
+      await backupData();
+      try { localStorage.setItem('sppc_last_backup', bln); } catch (e) {}
+    }, 4000);
+  } catch (e) {}
+}
+autoBackupBulanan();
 document.querySelectorAll('.date-hidden').forEach(function (inp) { inp.addEventListener('click', function () { try { if (inp.showPicker) inp.showPicker(); } catch (e) {} }); });
 </script>
 </body>
