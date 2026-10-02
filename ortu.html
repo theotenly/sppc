@@ -64,6 +64,13 @@
   .stat-label { font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); font-weight: 500; }
 
   /* Latest badge */
+  .les-count { background:#fff; border:1px solid #ecdfc4; border-radius:12px; padding:10px 14px; margin:0 0 12px; }
+  .lc-title { font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:#998; margin-bottom:4px; }
+  .lc-row { display:flex; flex-wrap:wrap; align-items:baseline; gap:4px 10px; padding:6px 0; border-top:1px dashed #ecdfc4; }
+  .lc-row:first-of-type { border-top:none; }
+  .lc-m { font-weight:600; font-size:14px; min-width:120px; }
+  .lc-n { font-weight:800; color:#4a0d1a; font-size:15px; }
+  .lc-t { flex-basis:100%; font-size:12px; color:#777; }
   .fam-chips { display:flex; flex-wrap:wrap; gap:8px; margin:0 0 12px; }
   .fam-chip { border:1px solid var(--accent); background:#fff; color:var(--ink); border-radius:999px; padding:7px 16px; font-size:14px; font-weight:600; cursor:pointer; font-family:inherit; }
   .fam-chip.active { background:#4a0d1a; color:#fff; border-color:#4a0d1a; }
@@ -136,6 +143,14 @@
     .pay-upload:active{opacity:.8}
     .pay-drop{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;width:100%;box-sizing:border-box;min-height:150px;margin-top:16px;padding:22px 16px;border:3px dashed var(--accent,#c9a24d);border-radius:16px;background:#fffaf0;cursor:pointer;text-align:center;animation:payPulse 2s ease-in-out infinite}
     .pay-drop:active{background:#fbefd6}
+    .pay-hist{margin-top:18px;background:#fff;border:1px solid #ecdfc4;border-radius:14px;padding:12px 14px}
+    .ph-title{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#998;margin-bottom:8px}
+    .ph-row{display:flex;justify-content:space-between;align-items:center;gap:10px}
+    .ph-sub{font-size:13px;color:#555;margin-top:2px}
+    .ph-ok{color:#1a7f4b;font-weight:700}
+    .ph-no{color:#b3261e;font-weight:700}
+    .ph-btn{padding:7px 12px;font-size:12px}
+    .pay-drop.ph-drop{min-height:90px;padding:12px;animation:none}
     .pay-drop .pd-ic{font-size:40px;line-height:1}
     .pay-drop span{font-size:17px;font-weight:800;color:#4a0d1a}
     .pay-drop small{font-size:13px;color:#8a6d3b}
@@ -300,6 +315,28 @@ async function loadFamily(murid, laporan) {
     });
   } catch (e) {}
 }
+// ── Jumlah les bulan ini & bulan lalu (dari absensi) ──
+async function loadLesCount(nama) {
+  const el = document.getElementById('les-count'); if (!el) return;
+  el.innerHTML = '';
+  const now = new Date();
+  const ym = function (d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); };
+  const cur = ym(now); const prevD = new Date(now.getFullYear(), now.getMonth() - 1, 1); const prev = ym(prevD);
+  let rows = [];
+  try {
+    const r = await sb.from('absensi_harian').select('tanggal,jenis,jumlah,nama').ilike('nama', String(nama).trim()).gte('tanggal', prev + '-01').order('tanggal');
+    rows = (r.data || []).filter(function (x) { const j = String(x.jenis || 'hadir').toLowerCase(); return !(j === 'sf' || j === 'fee' || j === 'schedule' || j === 'schedule_fee') && (Number(x.jumlah) || 0) > 0; });
+  } catch (e) { return; }
+  const MS = LANG === 'en' ? ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'] : ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+  const line = function (m) {
+    const rs = rows.filter(function (x) { return String(x.tanggal).slice(0, 7) === m; });
+    const n = rs.reduce(function (a, x) { return a + (Number(x.jumlah) || 0); }, 0);
+    const tgl = rs.map(function (x) { const d = new Date(String(x.tanggal).slice(0, 10) + 'T00:00:00'); return d.getDate() + ' ' + MS[d.getMonth()] + ((Number(x.jumlah) || 0) > 1 ? ' (×' + x.jumlah + ')' : ''); }).join(', ');
+    return '<div class="lc-row"><div class="lc-m">' + labelBulanOrtu(m) + '</div><div class="lc-n">' + n + ' ' + (LANG === 'en' ? (n === 1 ? 'lesson' : 'lessons') : 'les') + '</div>' + (tgl ? '<div class="lc-t">' + tgl + '</div>' : '') + '</div>';
+  };
+  el.innerHTML = '<div class="les-count"><div class="lc-title">' + (LANG === 'en' ? '🗓️ Lesson attendance' : '🗓️ Kehadiran les') + '</div>' + line(cur) + line(prev) + '</div>';
+}
+
 function famChipsHTML() {
   if (ORTU_FAM.length < 2) return '';
   return '<div class="fam-chips" id="fam-chips">' + ORTU_FAM.map(function (f, i) {
@@ -314,6 +351,7 @@ function pilihAnak(i) {
   const bd = document.getElementById('latest-badge'); if (bd) { bd.textContent = ortuSorted.length ? availMsg(ortuSorted.length) : ''; bd.style.display = ortuSorted.length ? '' : 'none'; }
   document.querySelectorAll('.fam-chip').forEach(function (b, j) { b.classList.toggle('active', j === i); });
   document.title = 'Progress ' + f.murid.nama + ' — SPPC';
+  loadLesCount(f.murid.nama);
   renderOrtuLaporan();
 }
 
@@ -357,6 +395,7 @@ ortuSorted = sorted;
       </div>
       <div id="tab-laporan">
         ${famChipsHTML()}
+        <div id="les-count"></div>
         <div class="latest-badge" id="latest-badge" style="${sorted.length ? '' : 'display:none'}">${sorted.length ? availMsg(sorted.length) : ''}</div>
         <div id="laporan-container"></div>
       </div>
@@ -370,6 +409,7 @@ ortuSorted = sorted;
     </div>
   `;
   renderOrtuLaporan();
+  loadLesCount(murid.nama);
   loadOrtuPay(murid);
 }
 
@@ -445,7 +485,7 @@ async function loadOrtuPay(murid) {
   try { const t = await sb.from('tarif').select('grup').eq('nama', murid.nama).limit(1); if (t.data && t.data[0] && t.data[0].grup && String(t.data[0].grup).trim()) target = String(t.data[0].grup).trim(); } catch (e) {}
   let invs = [];
   try { invs = (await sb.from('invoice').select('id,kode,bulan,total,lunas,bukti_url,items,target').eq('target', target).order('bulan', { ascending: false })).data || []; } catch (e) { el.innerHTML = ''; ortuInvs = []; setupOrtuTabs(); return; }
-  invs = invs.slice(0, 1); // hanya tampilkan invoice bulan terbaru
+  invs = invs.slice(0, 2); // invoice terbaru + riwayat 1 bulan sebelumnya
   ortuInvs = invs;
   if (!invs.length) { el.innerHTML = ''; setupOrtuTabs(); return; }
   const tsafe = String(target).replace(/'/g, "\\'");
@@ -454,6 +494,17 @@ async function loadOrtuPay(murid) {
     if (iv.lunas) action = '<div class="pay-ok">' + tr('paid') + (iv.bukti_url ? ' · <a href="' + iv.bukti_url + '" target="_blank">' + tr('view') + '</a>' : '') + '</div>';
     else action = '';
     const drop = iv.lunas ? '' : '<label class="pay-drop"><input type="file" accept="image/*" style="display:none" onchange="uploadBukti(' + iv.id + ',\'' + tsafe + '\',\'' + iv.bulan + '\',this)"><div class="pd-ic">📤</div><span>' + (LANG === 'en' ? 'Upload payment proof here' : 'Upload bukti transfer di sini') + '</span><small>' + (LANG === 'en' ? 'Tap to choose a photo / screenshot of your transfer' : 'Ketuk untuk pilih foto / screenshot bukti transfer') + '</small></label>';
+    if (idx > 0) {
+      // riwayat bulan lalu: ringkas
+      const st = iv.lunas
+        ? '<span class="ph-ok">✓ ' + (LANG === 'en' ? 'Paid' : 'Lunas') + '</span>' + (iv.bukti_url ? ' · <a href="' + iv.bukti_url + '" target="_blank">' + tr('view') + '</a>' : '')
+        : '<span class="ph-no">' + (LANG === 'en' ? 'Unpaid' : 'Belum lunas') + '</span>';
+      return '<div class="pay-hist"><div class="ph-title">' + (LANG === 'en' ? 'Previous month' : 'Riwayat bulan lalu') + '</div>'
+        + '<div class="ph-row"><div><strong>' + labelBulanOrtu(iv.bulan) + '</strong><div class="ph-sub">' + fmtRpO(iv.total) + ' · ' + st + '</div></div>'
+        + '<button class="pay-print ph-btn" onclick="cetakOrtuInvoice(' + idx + ')">' + tr('print') + '</button></div>'
+        + (iv.lunas ? '' : drop.replace('class="pay-drop"', 'class="pay-drop ph-drop"'))
+        + '</div>';
+    }
     return '<div class="inv-doc-card"><div class="inv-doc">' + invoiceDocHTML(iv) + '</div>' + drop + '<div class="pay-actions"><button class="pay-print" onclick="cetakOrtuInvoice(' + idx + ')">' + tr('print') + '</button>' + action + '</div></div>';
   }).join('');
   setupOrtuTabs();
