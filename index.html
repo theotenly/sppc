@@ -635,6 +635,7 @@
           <label>Bahasa Penagihan</label>
           <select id="f-bahasa"><option value="id">Indonesia</option><option value="en">English</option></select>
         </div>
+        <div style="margin-bottom:12px"><div class="field"><label>Grup / Keluarga <span style="font-weight:400;color:var(--muted)">· kosongkan kalau sendiri</span></label><input id="f-grup" type="text" list="grup-list" placeholder="cth. Eden-Family"></div></div>
         <div style="display:flex;gap:8px">
           <button class="btn-sm primary" id="btn-save-murid" onclick="saveStudent()">Simpan</button>
           <button class="btn-sm" onclick="toggleAddForm()">Batal</button>
@@ -712,6 +713,8 @@
     <div class="field"><label>Panggilan Orang Tua</label><input id="e-ortu" type="text"></div>
     <div class="field"><label>No. WhatsApp</label><input id="e-wa" type="tel"></div>
     <div class="field"><label>Bahasa Penagihan</label><select id="e-bahasa"><option value="id">Indonesia</option><option value="en">English</option></select></div>
+    <div class="field"><label>Grup / Keluarga <span style="font-weight:400;color:var(--muted)">· kosongkan kalau sendiri</span></label><input id="e-grup" type="text" list="grup-list" placeholder="cth. Eden-Family"></div>
+    <datalist id="grup-list"></datalist>
     <div style="display:flex;gap:8px;margin-top:16px">
       <button class="btn-sm primary" onclick="saveEdit()">Simpan</button>
       <button class="btn-sm" onclick="closeEdit()">Batal</button>
@@ -1456,12 +1459,37 @@ function showPage(name) {
 async function loadStudents() {
   try {
     students = await apiGet({ action: 'get_murid' });
+    await loadGrupMap();
     refreshSelect();
     renderStudentList();
     loadRosterNames();
   } catch(e) {
     showToast('⚠ Gagal memuat data: ' + e.message);
   }
+}
+
+// ── Grup / keluarga (disimpan di tarif.grup) ──
+let GRUP_MAP = {};
+async function loadGrupMap() {
+  GRUP_MAP = {};
+  try { const r = await sb.from('tarif').select('nama,grup'); (r.data || []).forEach(function (t) { const g = String(t.grup || '').trim(); if (g) GRUP_MAP[String(t.nama).trim().toLowerCase()] = g; }); } catch (e) {}
+  const dl = document.getElementById('grup-list');
+  if (dl) { const gs = Array.from(new Set(Object.values(GRUP_MAP))).sort(); dl.innerHTML = gs.map(function (g) { return '<option value="' + g.replace(/"/g, '&quot;') + '">'; }).join(''); }
+}
+function grupOf(nama) { return GRUP_MAP[String(nama || '').trim().toLowerCase()] || ''; }
+async function setGrupMurid(nama, grup, oldNama) {
+  grup = String(grup || '').trim();
+  const keys = [nama]; if (oldNama && oldNama !== nama) keys.push(oldNama);
+  // cari baris tarif yang cocok (tanpa beda huruf besar/kecil)
+  const r = await sb.from('tarif').select('nama');
+  const rows = (r.data || []).filter(function (t) { return keys.some(function (k) { return String(t.nama).trim().toLowerCase() === String(k).trim().toLowerCase(); }); });
+  if (rows.length) {
+    for (const t of rows) { const u = await sb.from('tarif').update({ grup: grup, updated: new Date().toISOString() }).eq('nama', t.nama); if (u.error) throw new Error(u.error.message); }
+  } else if (grup) {
+    const ins = await sb.from('tarif').insert({ nama: nama, grup: grup, tarif: 0, sf_rate: 0, transport: 0, durasi: 60, updated: new Date().toISOString() });
+    if (ins.error) throw new Error(ins.error.message);
+  }
+  await loadGrupMap();
 }
 
 function refreshSelect() {
@@ -2578,7 +2606,7 @@ function toggleAddForm() {
   const f = document.getElementById('add-form');
   f.classList.toggle('open');
   if (f.classList.contains('open')) {
-    ['f-nama','f-ortu','f-wa'].forEach(id => document.getElementById(id).value = '');
+    ['f-nama','f-ortu','f-wa','f-grup'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
     document.getElementById('f-nama').focus();
   }
 }
@@ -2594,6 +2622,8 @@ async function saveStudent() {
   try {
     const result = await apiPost({ action: 'add_murid', nama, ortu, wa, bahasa });
     students.push({ id: result.id, nama, ortu, wa, link_id: result.link_id, bahasa });
+    const fg = (document.getElementById('f-grup') || {}).value || '';
+    if (fg.trim()) { try { await setGrupMurid(nama, fg); } catch (e) { showToast('⚠ Grup gagal disimpan: ' + e.message); } }
     toggleAddForm();
     renderStudentList();
     refreshSelect();
@@ -2621,6 +2651,7 @@ function openEdit(id) {
   document.getElementById('e-ortu').value = s.ortu || '';
   document.getElementById('e-wa').value = s.wa;
   document.getElementById('e-bahasa').value = s.bahasa || 'id';
+  document.getElementById('e-grup').value = grupOf(s.nama);
   document.getElementById('edit-overlay').classList.add('open');
 }
 function closeEdit() { document.getElementById('edit-overlay').classList.remove('open'); }
@@ -2633,7 +2664,10 @@ async function saveEdit() {
   const bahasa = (document.getElementById('e-bahasa') || {}).value || 'id';
   if (!nama || !wa) { showToast('⚠ Nama dan nomor WA wajib diisi'); return; }
   try {
+    const old = students.find(s => s.id === id);
     await apiPost({ action: 'update_murid', id, nama, ortu, wa, bahasa });
+    const eg = (document.getElementById('e-grup') || {}).value || '';
+    if (eg.trim() !== grupOf(old ? old.nama : nama) || (old && old.nama !== nama)) await setGrupMurid(nama, eg, old ? old.nama : '');
     students = students.map(s => s.id === id ? {...s, nama, ortu, wa, bahasa} : s);
     closeEdit(); renderStudentList(); refreshSelect();
     showToast(`✓ Data ${nama} diperbarui`);
@@ -2669,7 +2703,7 @@ function renderStudentList() {
       <div class="avatar">${initials(s.nama)}</div>
       <div class="student-card-info">
         <div class="student-card-name">${s.nama}</div>
-        <div class="student-card-meta">${s.ortu ? s.ortu + ' &nbsp;·&nbsp; ' : ''}${s.wa}${s.bahasa === 'en' ? ' &nbsp;·&nbsp; 🌐 EN' : ''}</div>
+        <div class="student-card-meta">${s.ortu ? s.ortu + ' &nbsp;·&nbsp; ' : ''}${s.wa}${s.bahasa === 'en' ? ' &nbsp;·&nbsp; 🌐 EN' : ''}${grupOf(s.nama) ? ' &nbsp;·&nbsp; 👨‍👩‍👧 ' + grupOf(s.nama) : ''}</div>
         <div class="link-badge" onclick="copyLink('${s.link_id}')">🔗 Salin link orang tua</div>
       </div>
       <div class="student-card-actions">
