@@ -457,7 +457,7 @@
         Kirim WA
       </button>
       <button class="btn btn-submit" onclick="submitLaporan()" id="btn-submit">
-        💾 Simpan & Kirim WA
+        💾 Simpan Laporan
       </button>
     </div>
   </div>
@@ -2524,13 +2524,6 @@ async function submitLaporan() {
   const btn = document.getElementById('btn-submit');
   btn.disabled = true;
   btn.innerHTML = '<div class="spinner"></div> Menyimpan...';
-  // siapkan WA: buka tab sekarang (saat klik) supaya tidak diblokir popup
-  let waWin = null, waUrl = '';
-  if (s.wa) {
-    let wa = waNorm(s.wa); if (wa.startsWith('0')) wa = '62' + wa.slice(1);
-    waUrl = `https://wa.me/${wa}?text=${encodeURIComponent(buildMsg())}`;
-    try { waWin = window.open('', '_blank'); } catch (e) { waWin = null; }
-  }
 
   try {
     const result = await apiPost({
@@ -2543,21 +2536,15 @@ async function submitLaporan() {
     if (!laporanCache[s.id]) laporanCache[s.id] = [];
     laporanCache[s.id].push({ id: result.id, murid_id: s.id, tanggal: getTglInput(), materi });
     renderLaporan(s.id);
-    if (waUrl) {
-      if (waWin && !waWin.closed) waWin.location.href = waUrl;
-      else window.open(waUrl, '_blank');
-    }
-    showToast('✓ Laporan disimpan' + (waUrl ? ' · WA dibuka' : ''));
-    waWin = null;
+    showToast('✓ Laporan berhasil disimpan!');
     // clear form
     ['materi'].forEach(id => document.getElementById(id).value = '');
     updatePreview();
   } catch(e) {
-    try { if (waWin && !waWin.closed) waWin.close(); } catch (e2) {}
     showToast('⚠ Gagal simpan: ' + e.message);
   } finally {
     btn.disabled = false;
-    btn.innerHTML = '💾 Simpan & Kirim WA';
+    btn.innerHTML = '💾 Simpan Laporan';
   }
 }
 
