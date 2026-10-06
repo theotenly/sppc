@@ -1493,6 +1493,15 @@ async function setGrupMurid(nama, grup, oldNama) {
   await loadGrupMap();
 }
 
+async function ensureRoster(nama) {
+  nama = String(nama || '').trim(); if (!nama) return;
+  const r = await sb.from('absensi_murid').select('nama');
+  if ((r.data || []).some(function (x) { return String(x.nama).trim().toLowerCase() === nama.toLowerCase(); })) return;
+  const ins = await sb.from('absensi_murid').insert({ nama: nama });
+  if (ins.error) throw new Error(ins.error.message);
+  if (typeof absensiRoster !== 'undefined' && absensiRoster.indexOf(nama) < 0) absensiRoster.push(nama);
+}
+
 function refreshSelect() {
   const sel = document.getElementById('murid-select');
   const cur = sel.value;
@@ -2610,6 +2619,8 @@ async function saveStudent() {
   try {
     const result = await apiPost({ action: 'add_murid', nama, ortu, wa, bahasa });
     students.push({ id: result.id, nama, ortu, wa, link_id: result.link_id, bahasa });
+    // otomatis masuk daftar absensi harian
+    try { await ensureRoster(nama); } catch (e) {}
     const fg = (document.getElementById('f-grup') || {}).value || '';
     if (fg.trim()) { try { await setGrupMurid(nama, fg); } catch (e) { showToast('⚠ Grup gagal disimpan: ' + e.message); } }
     toggleAddForm();
