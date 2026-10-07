@@ -373,6 +373,22 @@
     #page-laporan .btn-row .btn-submit{grid-column:auto;white-space:nowrap}
     #btn-absensi-save{position:sticky;bottom:calc(64px + env(safe-area-inset-bottom));z-index:30;box-shadow:0 4px 14px rgba(0,0,0,.25)}
   }
+  /* animasi geser antar halaman */
+  @keyframes slideFromRight{from{opacity:0;transform:translateX(42px)}to{opacity:1;transform:none}}
+  @keyframes slideFromLeft{from{opacity:0;transform:translateX(-42px)}to{opacity:1;transform:none}}
+  .page.slide-l{animation:slideFromRight .28s cubic-bezier(.22,.8,.3,1)}
+  .page.slide-r{animation:slideFromLeft .28s cubic-bezier(.22,.8,.3,1)}
+  main{overflow-x:clip}
+  @media (prefers-reduced-motion:reduce){.page.slide-l,.page.slide-r{animation:none}}
+  /* edit murid di dalam kartu */
+  .student-card.editing{flex-wrap:wrap;border-color:var(--accent);box-shadow:0 0 0 2px rgba(201,162,77,.25)}
+  .student-card.editing .student-card-actions{display:none}
+  .student-card #edit-form{flex-basis:100%;max-width:none;width:100%;border-radius:0;padding:14px 0 0;margin-top:12px;border-top:1px dashed var(--border);background:transparent}
+  .student-card #edit-form h3{font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+  .edit-actions{display:flex;gap:8px;margin-top:16px}
+  .student-card .edit-actions{position:sticky;bottom:12px;z-index:25;background:var(--paper);padding:10px 0;margin-bottom:-4px;box-shadow:0 -6px 10px -8px rgba(0,0,0,.25)}
+  .student-card .edit-actions .btn-sm{flex:1;justify-content:center;min-height:42px;font-size:14px}
+  @media (max-width:640px){ .student-card .edit-actions{bottom:calc(62px + env(safe-area-inset-bottom))} }
 </style>
 </head>
 <body>
@@ -740,7 +756,7 @@
 
 <!-- Edit Modal -->
 <div id="edit-overlay" onclick="if(event.target===this)closeEdit()">
-  <div class="edit-modal">
+  <div class="edit-modal" id="edit-form">
     <h3>Edit Data Murid</h3>
     <input type="hidden" id="e-id">
     <div class="field"><label>Nama Murid</label><input id="e-nama" type="text"></div>
@@ -750,8 +766,8 @@
     <div class="field"><label>Grup / Keluarga <span style="font-weight:400;color:var(--muted)">· kosongkan kalau sendiri</span></label><input id="e-grup" type="text" list="grup-list" placeholder="cth. Eden-Family"></div>
     <div class="tarif-box"><div class="tb-title">💰 Tarif</div><div class="grid-2"><div class="field"><label>Tarif / sesi (Rp)</label><input id="e-tarif" type="number" inputmode="numeric" placeholder="0"></div><div class="field"><label>Durasi (menit)</label><input id="e-durasi" type="number" inputmode="numeric" placeholder="60"></div><div class="field"><label>Schedule fee (Rp)</label><input id="e-sf" type="number" inputmode="numeric" placeholder="0"></div><div class="field"><label>Transport (Rp)</label><input id="e-transport" type="number" inputmode="numeric" placeholder="0"></div></div></div>
     <datalist id="grup-list"></datalist>
-    <div style="display:flex;gap:8px;margin-top:16px">
-      <button class="btn-sm primary" onclick="saveEdit()">Simpan</button>
+    <div class="edit-actions">
+      <button class="btn-sm primary" onclick="saveEdit()">💾 Simpan</button>
       <button class="btn-sm" onclick="closeEdit()">Batal</button>
     </div>
   </div>
@@ -1474,11 +1490,22 @@ function showGroup(group, page) {
   showPage(page || lastPageOfGroup[group] || grp.pages[0][0]);
 }
 
+// urutan semua halaman (untuk arah animasi geser)
+const PAGE_ORDER = []; Object.keys(NAV_GROUPS).forEach(function (g) { NAV_GROUPS[g].pages.forEach(function (pr) { PAGE_ORDER.push(pr[0]); }); });
+let curPageName = null;
 function showPage(name) {
   const group = PAGE_GROUP[name] || 'isi';
   lastPageOfGroup[group] = name;
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  const pg = document.getElementById('page-' + name); if (pg) pg.classList.add('active');
+  const prevName = curPageName; curPageName = name;
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active', 'slide-l', 'slide-r'));
+  const pg = document.getElementById('page-' + name);
+  if (pg) {
+    pg.classList.add('active');
+    if (prevName && prevName !== name) {
+      const dir = PAGE_ORDER.indexOf(name) > PAGE_ORDER.indexOf(prevName) ? 'slide-l' : 'slide-r';
+      void pg.offsetWidth; pg.classList.add(dir);
+    }
+  }
   document.querySelectorAll('#group-bar .tab-btn').forEach(b => b.classList.toggle('active', b.getAttribute('data-group') === group));
   buildSubtabs(group, name);
   if (name === 'murid') renderStudentList();
@@ -2709,9 +2736,25 @@ function openEdit(id) {
   document.getElementById('e-bahasa').value = s.bahasa || 'id';
   document.getElementById('e-grup').value = grupOf(s.nama);
   fillTarifForm('e', tarifOf(s.nama));
-  document.getElementById('edit-overlay').classList.add('open');
+  // buka form langsung di dalam kartu murid (tanpa pop-up)
+  closeEdit();
+  const card = document.querySelector('.student-card[data-id="' + id + '"]');
+  const form = document.getElementById('edit-form');
+  if (card && form) {
+    card.classList.add('editing');
+    card.appendChild(form);
+    setTimeout(function () { card.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 50);
+  } else {
+    document.getElementById('edit-overlay').classList.add('open');
+  }
 }
-function closeEdit() { document.getElementById('edit-overlay').classList.remove('open'); }
+function closeEdit() {
+  const form = document.getElementById('edit-form');
+  const ov = document.getElementById('edit-overlay');
+  document.querySelectorAll('.student-card.editing').forEach(function (c) { c.classList.remove('editing'); });
+  if (form && ov && form.parentElement !== ov) ov.appendChild(form);
+  if (ov) ov.classList.remove('open');
+}
 
 async function saveEdit() {
   const id   = document.getElementById('e-id').value;
@@ -2744,6 +2787,7 @@ function copyLink(linkId) {
 function initials(nama) { return nama.split(' ').slice(0,2).map(w => w[0]).join('').toUpperCase(); }
 
 function renderStudentList() {
+  { const f = document.getElementById('edit-form'), ov = document.getElementById('edit-overlay'); if (f && ov && f.parentElement !== ov) closeEdit(); }
   let sorted = [...students].sort((a,b) => a.nama.localeCompare(b.nama));
   const _si = document.getElementById('murid-search-list');
   const q = (_si ? _si.value : '').toLowerCase().trim();
@@ -2756,7 +2800,7 @@ function renderStudentList() {
     return;
   }
   el.innerHTML = sorted.map(s => `
-    <div class="student-card">
+    <div class="student-card" data-id="${s.id}">
       <div class="avatar">${initials(s.nama)}</div>
       <div class="student-card-info">
         <div class="student-card-name">${s.nama}</div>
