@@ -417,6 +417,8 @@
   .pn-btns{display:flex;gap:2px;flex-shrink:0}
   .pn-btns button{background:none;border:1px solid transparent;border-radius:6px;cursor:pointer;font-size:14px;padding:3px 6px}
   .pn-btns button:hover{border-color:var(--border);background:#fff}
+  .inv-tgl{font-size:11.5px;color:var(--muted);margin-top:3px;line-height:1.5}
+  .inv-tgl b{color:var(--ink);font-weight:600}
 </style>
 </head>
 <body>
@@ -2258,12 +2260,14 @@ async function loadInvBuat() {
   try { data = await apiGet({ action: 'get_invoice_data', bulan: invBulan() }); }
   catch (e) { el.innerHTML = '<div class="empty">Gagal: ' + e.message + '</div>'; return; }
   invEntities = (data && data.entities) || [];
+  await loadInvTanggal(invBulan());
   if (!invEntities.length) { el.innerHTML = '<div class="empty" style="padding:1.25rem;text-align:center;color:var(--muted);font-size:13px">Belum ada aktivitas les/absensi bulan ini.</div>'; return; }
   const _head = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:8px;flex-wrap:wrap"><span style="font-size:12px;color:var(--muted)">' + invEntities.length + ' tagihan · ' + labelBulan(invBulan()) + '</span><span style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn-sm" style="background:#25D366;color:#fff" onclick="kirimWASemua()">💬 WA Semua</button><button class="btn-sm primary" id="inv-buatsemua-btn" onclick="buatInvoiceSemua()">🧾 Buat / Perbarui Semua</button></span></div>';
   const _search = '<input type="text" id="inv-buat-search" placeholder="🔍 Cari nama murid / grup..." oninput="filterInvBuat()" autocomplete="off" style="width:100%;font-size:14px;padding:9px 12px;margin-bottom:10px">';
   el.innerHTML = _head + _search + invEntities.map(function (en, i) {
     let est = 0; en.members.forEach(function (m) { est += (invSesi(m) * m.tarif) + (m.sf * m.sf_rate) + (invSesi(m) * m.transport); });
-    const sub = en.members.map(function (m) { return m.nama + ' (' + invSesi(m) + ' les' + (m.sf ? ', ' + m.sf + ' fee' : '') + ')'; }).join(', ');
+    const sub = en.members.map(function (m) { return m.nama + ' (' + invSesi(m) + ' les' + (m.sf ? ', ' + m.sf + ' fee' : '') + ')'; }).join(', ')
+      + '<div class="inv-tgl">' + en.members.map(function (m) { const t = tglLesOf(m.nama); return t ? ((en.members.length > 1 ? '<b>' + m.nama + ':</b> ' : '📅 ') + t) : ''; }).filter(Boolean).join('<br>') + '</div>';
     const inv = en.invoice;
     const badge = inv ? ('<span class="inv-badge ' + (inv.lunas ? 'lunas' : 'belum') + '">' + (inv.lunas ? 'Lunas' : 'Belum') + ' · ' + inv.kode + '</span>') : '<span style="font-size:11.5px;color:var(--muted)">est. ' + fmtRp(est) + '</span>';
     const _q = (en.title + ' ' + en.members.map(function (m) { return m.nama; }).join(' ')).toLowerCase().replace(/"/g, '');
@@ -2319,6 +2323,26 @@ function openInvoice(i) {
   document.getElementById('inv-overlay').classList.add('open');
 }
 
+// ── Tanggal-tanggal les per murid (info saja) ──
+let INV_TGL = {};
+async function loadInvTanggal(ym) {
+  INV_TGL = {};
+  try {
+    const y = +ym.slice(0, 4), mo = +ym.slice(5, 7);
+    const next = (mo === 12 ? (y + 1) + '-01' : y + '-' + String(mo + 1).padStart(2, '0')) + '-01';
+    const r = await sb.from('absensi_harian').select('nama,tanggal,jenis,jumlah').gte('tanggal', ym + '-01').lt('tanggal', next).order('tanggal');
+    (r.data || []).forEach(function (x) {
+      const j = String(x.jenis || 'hadir').toLowerCase(); if ((Number(x.jumlah) || 0) <= 0) return;
+      const k = String(x.nama).trim().toLowerCase(); if (!INV_TGL[k]) INV_TGL[k] = [];
+      INV_TGL[k].push({ t: x.tanggal, n: Number(x.jumlah) || 1, sf: (j === 'sf' || j === 'fee' || j === 'schedule' || j === 'schedule_fee') });
+    });
+  } catch (e) {}
+}
+function tglLesOf(nama) {
+  const arr = INV_TGL[String(nama).trim().toLowerCase()] || []; if (!arr.length) return '';
+  return arr.map(function (x) { const d = +String(x.t).slice(8, 10); return (x.sf ? '<span title="Schedule fee" style="color:#b3402f">' + d + '·fee</span>' : String(d)) + (x.n > 1 ? '×' + x.n : ''); }).join(', ');
+}
+
 function renderInvDetail() {
   const inv = invCurrent.invoice;
   let total = 0;
@@ -2330,6 +2354,7 @@ function renderInvDetail() {
   document.getElementById('inv-detail').innerHTML =
     '<div style="text-align:center;margin-bottom:12px"><div style="font-family:\'Cormorant Garamond\',serif;font-size:22px;font-weight:600;color:var(--navy)">Stanley Private Piano Course</div><div style="font-size:12px;color:var(--muted)">INVOICE' + (inv ? ' · ' + inv.kode : '') + ' · ' + labelBulan(invBulan()) + '</div></div>'
     + '<div style="font-size:13px;margin-bottom:8px">Kepada: <strong>' + invCurrent.title + '</strong></div>'
+    + (function () { const t = (invCurrent.members || []).map(function (m) { const x = tglLesOf(m.nama); return x ? ((invCurrent.members.length > 1 ? '<b>' + m.nama + ':</b> ' : '') + x) : ''; }).filter(Boolean).join('<br>'); return t ? '<div class="inv-tgl" style="margin:-2px 0 10px">📅 Tanggal les: ' + t + '</div>' : ''; })()
     + lines
     + '<div class="inv-line" style="border:none;font-weight:700;margin-top:4px"><span>Total</span><span></span><span></span><span class="amt">' + fmtRp(total) + '</span></div>'
     + '<button class="btn-sm" style="margin-top:10px" onclick="addInvExtra()">+ Tambah item (buku/lainnya)</button>';
