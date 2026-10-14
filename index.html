@@ -2265,7 +2265,8 @@ async function loadInvBuat() {
   const _head = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:8px;flex-wrap:wrap"><span style="font-size:12px;color:var(--muted)">' + invEntities.length + ' tagihan · ' + labelBulan(invBulan()) + '</span><span style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn-sm" style="background:#25D366;color:#fff" onclick="kirimWASemua()">💬 WA Semua</button><button class="btn-sm primary" id="inv-buatsemua-btn" onclick="buatInvoiceSemua()">🧾 Buat / Perbarui Semua</button></span></div>';
   const _search = '<input type="text" id="inv-buat-search" placeholder="🔍 Cari nama murid / grup..." oninput="filterInvBuat()" autocomplete="off" style="width:100%;font-size:14px;padding:9px 12px;margin-bottom:10px">';
   el.innerHTML = _head + _search + invEntities.map(function (en, i) {
-    let est = 0; en.members.forEach(function (m) { est += (invSesi(m) * m.tarif) + (m.sf * m.sf_rate) + (invSesi(m) * m.transport); });
+    let est = 0; en.members.forEach(function (m) { est += (invSesi(m) * m.tarif) + (m.sf * m.sf_rate) + (en.isGroup ? 0 : invSesi(m) * m.transport); });
+    if (en.isGroup) { const gt = grupTransport(en); est += gt.qty * gt.rate; }
     const sub = en.members.map(function (m) { return m.nama + ' (' + invSesi(m) + ' les' + (m.sf ? ', ' + m.sf + ' fee' : '') + ')'; }).join(', ')
       + '<div class="inv-tgl">' + en.members.map(function (m) { const t = tglLesOf(m.nama); return t ? ((en.members.length > 1 ? '<b>' + m.nama + ':</b> ' : '📅 ') + t) : ''; }).filter(Boolean).join('<br>') + '</div>';
     const inv = en.invoice;
@@ -2300,8 +2301,9 @@ async function buatInvoiceSemua() {
       const push = function (label, qty, rate) { const q = Number(qty) || 0, r = Number(rate) || 0; const amt = q * r; total += amt; items.push({ label: label, qty: q, rate: r, amount: amt }); };
       push(pref + 'Les', invSesi(m), m.tarif);
       if (m.sf > 0) push(pref + 'Schedule Fee', m.sf, m.sf_rate);
-      if (m.transport > 0) push(pref + 'Transport', invSesi(m), m.transport);
+      if (!en.isGroup && m.transport > 0) push(pref + 'Transport', invSesi(m), m.transport);
     });
+    if (en.isGroup) { const gt = grupTransport(en); if (gt.rate > 0 && gt.qty > 0) { const amt = gt.qty * gt.rate; total += amt; items.push({ label: 'Transport', qty: gt.qty, rate: gt.rate, amount: amt }); } }
     const body = { action: 'save_invoice', bulan: invBulan(), target: en.title, items: items, total: total };
     if (en.invoice && en.invoice.id) body.id = en.invoice.id;
     try { await apiPost(body); ok++; } catch (e) { gagal++; }
@@ -2317,8 +2319,9 @@ function openInvoice(i) {
     const pref = invCurrent.isGroup ? (m.nama + ' — ') : '';
     invLines.push({ label: pref + 'Les', qty: invSesi(m), rate: m.tarif, hadir: m.hadir, laporan: m.laporan, kind: 'les' });
     if (m.sf > 0) invLines.push({ label: pref + 'Schedule Fee', qty: m.sf, rate: m.sf_rate, kind: 'sf' });
-    if (m.transport > 0) invLines.push({ label: pref + 'Transport', qty: invSesi(m), rate: m.transport, kind: 'tr' });
+    if (!invCurrent.isGroup && m.transport > 0) invLines.push({ label: pref + 'Transport', qty: invSesi(m), rate: m.transport, kind: 'tr' });
   });
+  if (invCurrent.isGroup) { const gt = grupTransport(invCurrent); if (gt.rate > 0 && gt.qty > 0) invLines.push({ label: 'Transport', qty: gt.qty, rate: gt.rate, kind: 'tr', note: gt.qty + ' hari datang' }); }
   renderInvDetail();
   document.getElementById('inv-overlay').classList.add('open');
 }
@@ -2338,6 +2341,21 @@ async function loadInvTanggal(ym) {
     });
   } catch (e) {}
 }
+// Transport keluarga: dihitung per HARI datang (siapa pun anggota yang les), tarif = transport tertinggi di grup
+function grupTransport(en) {
+  const rate = Math.max.apply(null, [0].concat(en.members.map(function (m) { return Number(m.transport) || 0; })));
+  const days = {};
+  let ada = false;
+  en.members.forEach(function (m) {
+    (INV_TGL[String(m.nama).trim().toLowerCase()] || []).forEach(function (x) { ada = true; if (!x.sf) days[x.t] = 1; });
+  });
+  let qty = Object.keys(days).length;
+  if (!ada) { // cadangan kalau data tanggal gagal dimuat: pakai sesi terbanyak
+    qty = Math.max.apply(null, [0].concat(en.members.map(function (m) { return invSesi(m); })));
+  }
+  return { qty: qty, rate: rate };
+}
+
 function tglLesOf(nama) {
   const arr = INV_TGL[String(nama).trim().toLowerCase()] || []; if (!arr.length) return '';
   return arr.map(function (x) { const d = +String(x.t).slice(8, 10); return (x.sf ? '<span title="Schedule fee" style="color:#b3402f">' + d + '·fee</span>' : String(d)) + (x.n > 1 ? '×' + x.n : ''); }).join(', ');
