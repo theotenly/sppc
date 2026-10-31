@@ -419,6 +419,13 @@
   .pn-btns button:hover{border-color:var(--border);background:#fff}
   .inv-tgl{font-size:11.5px;color:var(--muted);margin-top:3px;line-height:1.5}
   .inv-tgl b{color:var(--ink);font-weight:600}
+  .inv-beda{margin-top:6px;display:flex;flex-direction:column;gap:5px}
+  .ib-row{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:6px;background:#fff6e5;border:1px solid #f0d9a8;border-radius:8px;padding:6px 8px;font-size:12px;color:#7a4b00}
+  .ib-row i{color:#b3402f;font-style:normal;font-weight:600}
+  .ib-btns{display:flex;gap:4px}
+  .ib-btn{border:1px solid #e3c98f;background:#fff;color:#5b4a2a;border-radius:999px;padding:4px 10px;font-size:11.5px;font-weight:600;cursor:pointer;font-family:inherit}
+  .ib-btn.on{background:#4a0d1a;border-color:#4a0d1a;color:#fff}
+  .inv-beda-banner{background:#fff6e5;border:1px solid #f0d9a8;color:#7a4b00;border-radius:10px;padding:9px 12px;font-size:12.5px;margin-bottom:10px}
 </style>
 </head>
 <body>
@@ -1213,7 +1220,7 @@ async function saveSetting() {
 }
 
 let naData = [];
-let naEditId = null;
+let naEditId = null; let naPickedName = null; let naSaving = false;
 let naReorder = false;
 const NA_OFFSETS = [{ d: 14, lbl: '2 minggu' }, { mo: 2, lbl: '2 bulan' }];
 function naAddOffset(tgl, off) { const d = new Date(tgl + 'T00:00:00'); if (off.d) d.setDate(d.getDate() + off.d); if (off.mo) d.setMonth(d.getMonth() + off.mo); return d; }
@@ -1230,8 +1237,9 @@ function toggleNaForm() {
   const f = document.getElementById('na-form');
   const willOpen = !f.classList.contains('open');
   f.classList.toggle('open');
+  if (!willOpen) { naEditId = null; naReorder = false; naPickedName = null; document.getElementById('na-save-btn').textContent = 'Simpan Order'; }
   if (willOpen) {
-    naEditId = null; naReorder = false;
+    naEditId = null; naReorder = false; naPickedName = null;
     document.getElementById('na-save-btn').textContent = 'Simpan Order';
     document.getElementById('na-nama').value = ''; document.getElementById('na-wa').value = ''; document.getElementById('na-detail').value = '';
     const s = document.getElementById('na-suggest'); if (s) { s.innerHTML = ''; s.style.display = 'none'; }
@@ -1245,6 +1253,12 @@ function naSuggest() {
   const inp = document.getElementById('na-nama'), box = document.getElementById('na-suggest');
   if (!inp || !box) return;
   const q = (inp.value || '').toLowerCase().trim();
+  if (naReorder && naPickedName !== null && q !== naPickedName) {
+    // nama diganti setelah memilih customer lama → jadikan order customer BARU, jangan timpa data lama
+    naEditId = null; naReorder = false; naPickedName = null;
+    document.getElementById('na-save-btn').textContent = 'Simpan Order';
+    showToast('Nama diganti → dicatat sebagai customer baru');
+  }
   if (!q || naReorder) { box.innerHTML = ''; box.style.display = 'none'; return; }
   const byName = {};
   naData.forEach(function (o) { const nm = String(o.nama).trim().toLowerCase(); if (!nm) return; const k = nm + '|' + String(o.wa || '').replace(/[^0-9]/g, ''); if (!byName[k] || String(o.tgl_order) > String(byName[k].tgl_order)) byName[k] = o; });
@@ -1260,14 +1274,14 @@ function pickNaCustomer(id) {
   document.getElementById('na-wa').value = o.wa || '';
   document.getElementById('na-detail').value = '';
   const box = document.getElementById('na-suggest'); box.innerHTML = ''; box.style.display = 'none';
-  naEditId = o.id; naReorder = true;
+  naEditId = o.id; naReorder = true; naPickedName = String(o.nama || '').toLowerCase().trim();
   document.getElementById('na-save-btn').textContent = 'Order Lagi (reset follow-up)';
   showToast('Customer sudah terdaftar — akan dicatat sebagai order baru');
 }
 
 function editNotangka(id) {
   const o = naData.find(function (x) { return x.id === id; }); if (!o) return;
-  naEditId = id; naReorder = false;
+  naEditId = id; naReorder = false; naPickedName = null;
   document.getElementById('na-nama').value = o.nama || '';
   document.getElementById('na-wa').value = o.wa || '';
   document.getElementById('na-detail').value = o.detail || '';
@@ -1427,25 +1441,40 @@ async function saveNotangka() {
   const detail = document.getElementById('na-detail').value.trim();
   const tgl = document.getElementById('na-tgl').value || todayISO();
   if (!nama) { showToast('⚠ Nama wajib diisi'); return; }
+  if (naSaving) return; naSaving = true;
+  const _btn = document.getElementById('na-save-btn'); if (_btn) _btn.disabled = true;
+  const chk = function (r) { if (r && r.error) throw new Error(r.error.message); return r; };
   try {
+    if (naEditId && !naReorder) {
+      // ganti nama → tawarkan ganti juga di order lain dengan nama lama & WA yang sama
+      const old = naData.find(function (x) { return x.id === naEditId; });
+      if (old && String(old.nama).trim() !== nama) {
+        const waN = function (w) { return String(w || '').replace(/[^0-9]/g, ''); };
+        const others = naData.filter(function (x) { return x.id !== old.id && String(x.nama).trim().toLowerCase() === String(old.nama).trim().toLowerCase() && (!waN(old.wa) || waN(x.wa) === waN(old.wa)); });
+        if (others.length && confirm('Ada ' + others.length + ' order lain atas nama "' + old.nama + '". Ganti namanya juga jadi "' + nama + '"?')) {
+          for (const x of others) chk(await sb.from('notangka_order').update({ nama: nama }).eq('id', x.id));
+        }
+      }
+    }
     if (naEditId && naReorder) {
       const _rec = naData.find(function (x) { return x.id === naEditId; });
       const _cnt = (((_rec && _rec.order_count) || 1) + 1);
-      await sb.from('notangka_order').update({ nama: nama, wa: wa, detail: detail, tgl_order: tgl, step: 0, done: false, silent: false, tgl_selesai: null, dikerjakan: true, order_count: _cnt }).eq('id', naEditId);
+      chk(await sb.from('notangka_order').update({ nama: nama, wa: wa, detail: detail, tgl_order: tgl, step: 0, done: false, silent: false, tgl_selesai: null, dikerjakan: true, order_count: _cnt }).eq('id', naEditId));
       showToast('✓ Order baru (' + _cnt + '×) · masuk Perlu Dikerjakan');
     } else if (naEditId) {
-      await sb.from('notangka_order').update({ nama: nama, wa: wa, detail: detail, tgl_order: tgl }).eq('id', naEditId);
+      chk(await sb.from('notangka_order').update({ nama: nama, wa: wa, detail: detail, tgl_order: tgl }).eq('id', naEditId));
       showToast('✓ Order diperbarui');
     } else {
-      await sb.from('notangka_order').insert({ nama: nama, wa: wa, detail: detail, tgl_order: tgl, step: 0, done: false, dikerjakan: true });
+      chk(await sb.from('notangka_order').insert({ nama: nama, wa: wa, detail: detail, tgl_order: tgl, step: 0, done: false, dikerjakan: true }));
       showToast('✓ ' + nama + ' ditambahkan ke Perlu Dikerjakan');
     }
-    naEditId = null; naReorder = false;
+    naEditId = null; naReorder = false; naPickedName = null;
     document.getElementById('na-save-btn').textContent = 'Simpan Order';
     document.getElementById('na-nama').value = ''; document.getElementById('na-wa').value = ''; document.getElementById('na-detail').value = '';
     document.getElementById('na-form').classList.remove('open');
     loadNotangka();
   } catch (e) { showToast('⚠ Gagal: ' + e.message); }
+  finally { naSaving = false; if (_btn) _btn.disabled = false; }
 }
 
 async function tickNotangka(id) {
@@ -2229,7 +2258,26 @@ let invCurrent = null;
 let invLines = [];
 let invTarif = {};
 
-function invSesi(m) { return Number(m.hadir) || 0; }
+// Sumber jumlah les: default absensi; bisa dipilih 'laporan' per murid per bulan bila angkanya beda
+function invSrcKey(nama) { return 'sppc_src_' + invBulan() + '_' + String(nama).trim().toLowerCase(); }
+function invSrc(m) { try { return localStorage.getItem(invSrcKey(m.nama)) || ''; } catch (e) { return ''; } }
+function invBeda(m) { return m.laporan != null && (Number(m.laporan) || 0) !== (Number(m.hadir) || 0); }
+function invSesi(m) { return (invBeda(m) && invSrc(m) === 'laporan') ? (Number(m.laporan) || 0) : (Number(m.hadir) || 0); }
+function pilihSumber(nama, src) {
+  try { localStorage.setItem(invSrcKey(nama), src); } catch (e) {}
+  showToast('✓ ' + nama + ': pakai data ' + src);
+  const q = (document.getElementById('inv-buat-search') || {}).value || '';
+  loadInvBuat().then(function () { const si = document.getElementById('inv-buat-search'); if (si && q) { si.value = q; filterInvBuat(); } });
+}
+function invBedaHTML(en) {
+  const beda = en.members.filter(invBeda); if (!beda.length) return '';
+  return '<div class="inv-beda">' + beda.map(function (m) {
+    const src = invSrc(m) === 'laporan' ? 'laporan' : 'absensi'; const nm = String(m.nama).replace(/'/g, "\\'");
+    return '<div class="ib-row"><span>⚠ <b>' + m.nama + '</b> beda data' + (invSrc(m) ? '' : ' <i>(belum dipilih)</i>') + '</span><span class="ib-btns">'
+      + '<button class="ib-btn' + (src === 'absensi' ? ' on' : '') + '" onclick="pilihSumber(\'' + nm + '\',\'absensi\')">Absensi ' + (Number(m.hadir) || 0) + '</button>'
+      + '<button class="ib-btn' + (src === 'laporan' ? ' on' : '') + '" onclick="pilihSumber(\'' + nm + '\',\'laporan\')">Laporan ' + (Number(m.laporan) || 0) + '</button></span></div>';
+  }).join('') + '</div>';
+}
 function fmtRp(n) { return 'Rp ' + (Number(n) || 0).toLocaleString('id-ID'); }
 function waNorm(raw) { var s = String(raw || '').trim(); var intl = s.charAt(0) === '+'; var d = s.replace(/[^0-9]/g, ''); if (!d) return ''; if (intl) return d; if (d.charAt(0) === '0') return '62' + d.slice(1); return d; }
 function buktiLink(iv) { return iv && iv.bukti_url ? ' · <a href="' + iv.bukti_url + '" target="_blank" onclick="event.stopPropagation()" style="color:#1a7f4b">📎 bukti</a>' : ''; }
@@ -2264,7 +2312,9 @@ async function loadInvBuat() {
   if (!invEntities.length) { el.innerHTML = '<div class="empty" style="padding:1.25rem;text-align:center;color:var(--muted);font-size:13px">Belum ada aktivitas les/absensi bulan ini.</div>'; return; }
   const _head = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:8px;flex-wrap:wrap"><span style="font-size:12px;color:var(--muted)">' + invEntities.length + ' tagihan · ' + labelBulan(invBulan()) + '</span><span style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn-sm" style="background:#25D366;color:#fff" onclick="kirimWASemua()">💬 WA Semua</button><button class="btn-sm primary" id="inv-buatsemua-btn" onclick="buatInvoiceSemua()">🧾 Buat / Perbarui Semua</button></span></div>';
   const _search = '<input type="text" id="inv-buat-search" placeholder="🔍 Cari nama murid / grup..." oninput="filterInvBuat()" autocomplete="off" style="width:100%;font-size:14px;padding:9px 12px;margin-bottom:10px">';
-  el.innerHTML = _head + _search + invEntities.map(function (en, i) {
+  const _nBeda = invEntities.reduce(function (a, en) { return a + en.members.filter(function (m) { return invBeda(m) && !invSrc(m); }).length; }, 0);
+  const _banner = _nBeda ? '<div class="inv-beda-banner">⚠ ' + _nBeda + ' murid jumlah <b>laporan & absensi beda</b> — pilih data yang dipakai di tiap kartu (default: absensi).</div>' : '';
+  el.innerHTML = _head + _banner + _search + invEntities.map(function (en, i) {
     let est = 0; en.members.forEach(function (m) { est += (invSesi(m) * m.tarif) + (m.sf * m.sf_rate) + (en.isGroup ? 0 : invSesi(m) * m.transport); });
     if (en.isGroup) { const gt = grupTransport(en); est += gt.qty * gt.rate; }
     const sub = en.members.map(function (m) { return m.nama + ' (' + invSesi(m) + ' les' + (m.sf ? ', ' + m.sf + ' fee' : '') + ')'; }).join(', ')
@@ -2272,7 +2322,7 @@ async function loadInvBuat() {
     const inv = en.invoice;
     const badge = inv ? ('<span class="inv-badge ' + (inv.lunas ? 'lunas' : 'belum') + '">' + (inv.lunas ? 'Lunas' : 'Belum') + ' · ' + inv.kode + '</span>') : '<span style="font-size:11.5px;color:var(--muted)">est. ' + fmtRp(est) + '</span>';
     const _q = (en.title + ' ' + en.members.map(function (m) { return m.nama; }).join(' ')).toLowerCase().replace(/"/g, '');
-    return '<div class="inv-entity" data-q="' + _q + '"><div style="min-width:0"><div class="inv-entity-title">' + en.title + (en.isGroup ? ' 👥' : '') + '</div><div class="inv-entity-sub">' + sub + '</div><div style="margin-top:4px">' + badge + '</div></div><div style="display:flex;gap:6px;flex-shrink:0">' + (inv ? '<button class="btn-sm" style="background:#25D366;color:#fff" onclick="kirimWAEntity(' + i + ')">💬 WA</button>' : '') + '<button class="btn-sm primary" onclick="openInvoice(' + i + ')">' + (inv ? 'Lihat' : 'Buat') + '</button></div></div>';
+    return '<div class="inv-entity" data-q="' + _q + '"><div style="min-width:0"><div class="inv-entity-title">' + en.title + (en.isGroup ? ' 👥' : '') + '</div><div class="inv-entity-sub">' + sub + '</div>' + invBedaHTML(en) + '<div style="margin-top:4px">' + badge + '</div></div><div style="display:flex;gap:6px;flex-shrink:0">' + (inv ? '<button class="btn-sm" style="background:#25D366;color:#fff" onclick="kirimWAEntity(' + i + ')">💬 WA</button>' : '') + '<button class="btn-sm primary" onclick="openInvoice(' + i + ')">' + (inv ? 'Lihat' : 'Buat') + '</button></div></div>';
   }).join('');
 }
 
@@ -2288,8 +2338,10 @@ function filterInvBuat() {
 async function buatInvoiceSemua() {
   if (!invEntities.length) return;
   const adaLama = invEntities.filter(function (e) { return e.invoice; }).length;
+  const _belum = []; invEntities.forEach(function (en) { en.members.forEach(function (m) { if (invBeda(m) && !invSrc(m)) _belum.push(m.nama + ' (absensi ' + (m.hadir || 0) + ' / laporan ' + (m.laporan || 0) + ')'); }); });
+  if (_belum.length && !confirm('⚠ ' + _belum.length + ' murid datanya beda & belum dipilih:\n\n' + _belum.join('\n') + '\n\nOK = lanjut pakai ABSENSI\nBatal = pilih dulu di daftar')) return;
   let msg = 'Buat/perbarui invoice untuk ' + invEntities.length + ' tagihan bulan ' + labelBulan(invBulan()) + '?';
-  if (adaLama) msg += '\n\n' + adaLama + ' invoice yang sudah ada akan DITIMPA dengan hitungan terbaru dari absensi (nomor & status lunas tetap). Perubahan manual pada invoice itu akan hilang.';
+  if (adaLama) msg += '\n\n' + adaLama + ' invoice yang sudah ada akan DITIMPA dengan hitungan terbaru (nomor & status lunas tetap). Perubahan manual pada invoice itu akan hilang.';
   if (!confirm(msg)) return;
   const btn = document.getElementById('inv-buatsemua-btn');
   if (btn) { btn.disabled = true; btn.textContent = 'Memproses...'; }
