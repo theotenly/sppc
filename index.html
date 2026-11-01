@@ -431,6 +431,7 @@
   .inv-ftab.on{background:#4a0d1a;color:#fff;border-color:#4a0d1a}
   .inv-ftab.warn:not(.on){border-color:#f0d9a8;background:#fff6e5;color:#7a4b00}
   .rekap-tgl{font-size:11px;color:#7a4b00;margin-top:3px;line-height:1.45;font-weight:400}
+  .lap-pdf{width:auto!important;padding:0 10px;font-size:12px!important;font-weight:700;color:#4a0d1a;margin-left:6px}
 </style>
 </head>
 <body>
@@ -2810,6 +2811,7 @@ function renderLaporan(muridId) {
       <button ${laporanPageNo >= pages ? 'disabled' : ''} onclick="gotoLaporanPage('${muridId}',1)">‹</button>
       <strong>${lapBulanLabel(ym)}</strong>
       <button ${laporanPageNo <= 1 ? 'disabled' : ''} onclick="gotoLaporanPage('${muridId}',-1)">›</button>
+      <button class="lap-pdf" onclick="cetakLaporanBulan('${muridId}','${ym}')" title="Download laporan bulan ini (PDF)">⬇️ PDF</button>
     </div>`;
   el.innerHTML = nav + `<table class="lap-table"><thead><tr><th style="width:62px">Tanggal</th><th>Catatan</th><th style="width:84px"></th></tr></thead><tbody>${body}</tbody></table>`;
 }
@@ -2818,6 +2820,32 @@ function salinLapId(id, muridId) {
   const l = (laporanCache[muridId] || []).find(function (x) { return x.id === id; }); if (!l) return;
   PREV_NOTES = [l].concat(PREV_NOTES.filter(function (x) { return x.id !== id; }));
   salinCatatan(0);
+}
+
+// ── Download laporan bulanan (PDF lewat Print → Save as PDF) ──
+function cetakLaporanBulan(muridId, ym) {
+  const s = students.find(function (x) { return x.id === muridId; }); if (!s) return;
+  const rows = (laporanCache[muridId] || []).filter(function (l) { return String(l.tanggal).slice(0, 7) === ym; })
+    .sort(function (a, b) { return String(a.tanggal).localeCompare(String(b.tanggal)); });
+  if (!rows.length) { showToast('Belum ada laporan bulan ini'); return; }
+  const tgl = function (t) { const d = new Date(String(t).slice(0, 10) + 'T00:00:00'); return d.getDate() + ' ' + ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'][d.getMonth()]; };
+  const html = '<div style="font-family:Arial,Helvetica,sans-serif;color:#2b0714;max-width:720px;margin:0 auto">'
+    + '<div style="text-align:center;border-bottom:3px solid #C9A24D;padding-bottom:12px;margin-bottom:16px">'
+    +   '<div style="font-family:Georgia,serif;font-size:20px;font-weight:700;letter-spacing:.03em;color:#4a0d1a">STANLEY PRIVATE PIANO COURSE</div>'
+    +   '<div style="font-size:12px;color:#888;letter-spacing:.12em;margin-top:4px">LAPORAN PROGRESS LES PIANO</div></div>'
+    + '<table style="font-size:13.5px;margin-bottom:14px;border-collapse:collapse">'
+    +   '<tr><td style="padding:2px 14px 2px 0;color:#666">Nama Murid</td><td style="padding:2px 0">: <b>' + lapEsc(s.nama) + '</b></td></tr>'
+    +   '<tr><td style="padding:2px 14px 2px 0;color:#666">Bulan</td><td style="padding:2px 0">: ' + lapBulanLabel(ym) + '</td></tr>'
+    +   '<tr><td style="padding:2px 14px 2px 0;color:#666">Jumlah pertemuan</td><td style="padding:2px 0">: ' + rows.length + '</td></tr></table>'
+    + '<table style="width:100%;border-collapse:collapse;font-size:12.5px">'
+    +   '<thead><tr style="background:#4a0d1a;color:#fff"><th style="padding:8px 10px;text-align:left;width:70px;border:1px solid #4a0d1a">Tanggal</th><th style="padding:8px 10px;text-align:left;border:1px solid #4a0d1a">Materi / Catatan</th></tr></thead><tbody>'
+    +   rows.map(function (l) { return '<tr style="page-break-inside:avoid"><td style="padding:9px 10px;border:1px solid #ddd;vertical-align:top;font-weight:700;white-space:nowrap">' + tgl(l.tanggal) + '</td><td style="padding:9px 10px;border:1px solid #ddd;white-space:pre-wrap;line-height:1.5">' + lapEsc(l.materi || '—') + '</td></tr>'; }).join('')
+    + '</tbody></table>'
+    + '<div style="margin-top:18px;font-size:11px;color:#999;text-align:center">Stanley Private Piano Course · dicetak ' + fmtDMY(todayISO()) + '</div></div>';
+  const box = document.getElementById('invoice-print'); box.innerHTML = html;
+  const oldTitle = document.title; document.title = 'Laporan ' + s.nama + ' - ' + lapBulanLabel(ym);
+  window.print();
+  setTimeout(function () { document.title = oldTitle; }, 1500);
 }
 
 function gotoLaporanPage(muridId, delta) {
