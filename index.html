@@ -426,6 +426,11 @@
   .ib-btn{border:1px solid #e3c98f;background:#fff;color:#5b4a2a;border-radius:999px;padding:4px 10px;font-size:11.5px;font-weight:600;cursor:pointer;font-family:inherit}
   .ib-btn.on{background:#4a0d1a;border-color:#4a0d1a;color:#fff}
   .inv-beda-banner{background:#fff6e5;border:1px solid #f0d9a8;color:#7a4b00;border-radius:10px;padding:9px 12px;font-size:12.5px;margin-bottom:10px}
+  .inv-ftabs{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap}
+  .inv-ftab{border:1px solid var(--border);background:#fff;color:var(--ink);border-radius:999px;padding:7px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
+  .inv-ftab.on{background:#4a0d1a;color:#fff;border-color:#4a0d1a}
+  .inv-ftab.warn:not(.on){border-color:#f0d9a8;background:#fff6e5;color:#7a4b00}
+  .rekap-tgl{font-size:11px;color:#7a4b00;margin-top:3px;line-height:1.45;font-weight:400}
 </style>
 </head>
 <body>
@@ -2243,12 +2248,43 @@ async function loadRekap() {
   try { rows = await apiGet({ action: 'get_rekap', bulan: bulan }) || []; }
   catch (e) { body.innerHTML = '<tr><td colspan="3" style="text-align:center;color:var(--muted);padding:12px">Gagal: ' + e.message + '</td></tr>'; if (sum) sum.textContent = ''; return; }
   if (!rows.length) { body.innerHTML = '<tr><td colspan="3" style="text-align:center;color:var(--muted);padding:12px">Belum ada data bulan ini.</td></tr>'; if (sum) sum.textContent = ''; return; }
-  let diff = 0;
-  body.innerHTML = rows.map(function (r) {
-    const d = r.laporan !== r.absensi;
-    if (d) diff++;
-    return '<tr class="' + (d ? 'rekap-diff' : '') + '"><td>' + r.nama + '</td><td class="num">' + r.laporan + '</td><td class="num">' + r.absensi + (d ? ' ⚠' : '') + '</td></tr>';
-  }).join('');
+  // tanggal yang tidak cocok per murid
+  const tglBeda = {};
+  try {
+    const rg = ymRange(bulan);
+    const lr = await sb.from('laporan').select('murid_id,tanggal').gte('tanggal', rg.s).lt('tanggal', rg.e);
+    const ar = await sb.from('absensi_harian').select('nama,tanggal,jenis,jumlah').gte('tanggal', rg.s).lt('tanggal', rg.e);
+    const idNama = {}; students.forEach(function (st) { idNama[st.id] = String(st.nama).trim().toLowerCase(); });
+    const L = {}, A = {};
+    (lr.data || []).forEach(function (x) { const k = idNama[x.murid_id]; if (!k) return; (L[k] = L[k] || {})[x.tanggal] = 1; });
+    (ar.data || []).forEach(function (x) { const j = String(x.jenis || 'hadir').toLowerCase(); if (j !== 'hadir' || (Number(x.jumlah) || 0) <= 0) return; const k = String(x.nama).trim().toLowerCase(); (A[k] = A[k] || {})[x.tanggal] = 1; });
+    const d2 = function (t) { return +String(t).slice(8, 10); };
+    Object.keys(Object.assign({}, L, A)).forEach(function (k) {
+      const l = Object.keys(L[k] || {}).filter(function (t) { return !(A[k] || {})[t]; }).sort().map(d2);
+      const a = Object.keys(A[k] || {}).filter(function (t) { return !(L[k] || {})[t]; }).sort().map(d2);
+      if (l.length || a.length) tglBeda[k] = { l: l, a: a };
+    });
+  } catch (e) {}
+  REKAP_ROWS = rows; REKAP_TGL = tglBeda;
+  renderRekapRows();
+}
+let REKAP_ROWS = [], REKAP_TGL = {}, REKAP_FILTER = 'all';
+function setRekapFilter(f) { REKAP_FILTER = f; renderRekapRows(); }
+function renderRekapRows() {
+  const body = document.getElementById('rekap-body'); const sum = document.getElementById('rekap-summary');
+  const rows = REKAP_ROWS; let diff = 0;
+  const isBeda = function (r) { return r.laporan !== r.absensi || !!REKAP_TGL[String(r.nama).trim().toLowerCase()]; };
+  rows.forEach(function (r) { if (isBeda(r)) diff++; });
+  let tabs = document.getElementById('rekap-ftabs');
+  if (!tabs) { tabs = document.createElement('div'); tabs.id = 'rekap-ftabs'; tabs.className = 'inv-ftabs'; const tbl = body.closest('table'); if (tbl) tbl.parentElement.insertBefore(tabs, tbl); }
+  tabs.innerHTML = '<button class="inv-ftab' + (REKAP_FILTER === 'all' ? ' on' : '') + '" onclick="setRekapFilter(\'all\')">Semua (' + rows.length + ')</button>'
+    + '<button class="inv-ftab warn' + (REKAP_FILTER === 'beda' ? ' on' : '') + '" onclick="setRekapFilter(\'beda\')">⚠ Beda data (' + diff + ')</button>';
+  const show = REKAP_FILTER === 'beda' ? rows.filter(isBeda) : rows;
+  body.innerHTML = show.length ? show.map(function (r) {
+    const d = isBeda(r); const tb = REKAP_TGL[String(r.nama).trim().toLowerCase()];
+    const det = tb ? '<div class="rekap-tgl">' + (tb.l.length ? '📝 laporan tanpa absensi: <b>' + tb.l.join(', ') + '</b>' : '') + (tb.l.length && tb.a.length ? '<br>' : '') + (tb.a.length ? '🗓️ absensi tanpa laporan: <b>' + tb.a.join(', ') + '</b>' : '') + '</div>' : '';
+    return '<tr class="' + (d ? 'rekap-diff' : '') + '"><td>' + r.nama + det + '</td><td class="num">' + r.laporan + '</td><td class="num">' + r.absensi + (d ? ' ⚠' : '') + '</td></tr>';
+  }).join('') : '<tr><td colspan="3" style="text-align:center;color:var(--muted);padding:12px">✓ Semua data cocok</td></tr>';
   if (sum) sum.textContent = rows.length + ' murid · ' + (rows.length - diff) + ' cocok · ' + diff + ' beda';
 }
 
@@ -2304,7 +2340,8 @@ function showInvSection(sec) {
   else if (sec === 'histori') loadInvHistori();
 }
 
-async function loadInvBuat() {
+async function loadInvBuat() { await _loadInvBuat(); try { filterInvBuat(); } catch (e) {} }
+async function _loadInvBuat() {
   const el = document.getElementById('inv-buat');
   el.innerHTML = '<div class="empty"><div class="spinner dark"></div></div>';
   let data;
@@ -2317,7 +2354,10 @@ async function loadInvBuat() {
   const _search = '<input type="text" id="inv-buat-search" placeholder="🔍 Cari nama murid / grup..." oninput="filterInvBuat()" autocomplete="off" style="width:100%;font-size:14px;padding:9px 12px;margin-bottom:10px">';
   const _nBeda = invEntities.reduce(function (a, en) { return a + en.members.filter(function (m) { return invBeda(m) && !invSrc(m); }).length; }, 0);
   const _banner = _nBeda ? '<div class="inv-beda-banner">⚠ ' + _nBeda + ' murid jumlah <b>laporan & absensi beda</b> — pilih data yang dipakai di tiap kartu (default: absensi).</div>' : '';
-  el.innerHTML = _head + _banner + _search + invEntities.map(function (en, i) {
+  const _nEnBeda = invEntities.filter(function (en) { return en.members.some(invBeda); }).length;
+  const _tabs = '<div class="inv-ftabs"><button class="inv-ftab' + (INV_FILTER === 'all' ? ' on' : '') + '" onclick="setInvFilter(\'all\')">Semua (' + invEntities.length + ')</button>'
+    + '<button class="inv-ftab warn' + (INV_FILTER === 'beda' ? ' on' : '') + '" onclick="setInvFilter(\'beda\')">⚠ Beda data (' + _nEnBeda + ')</button></div>';
+  el.innerHTML = _head + _banner + _tabs + _search + invEntities.map(function (en, i) {
     let est = 0; en.members.forEach(function (m) { est += (invSesi(m) * m.tarif) + (m.sf * m.sf_rate) + (en.isGroup ? 0 : invSesi(m) * m.transport); });
     if (en.isGroup) { const gt = grupTransport(en); est += gt.qty * gt.rate; }
     const sub = en.members.map(function (m) { return m.nama + ' (' + invSesi(m) + ' les' + (m.sf ? ', ' + m.sf + ' fee' : '') + ')'; }).join(', ')
@@ -2325,16 +2365,22 @@ async function loadInvBuat() {
     const inv = en.invoice;
     const badge = inv ? ('<span class="inv-badge ' + (inv.lunas ? 'lunas' : 'belum') + '">' + (inv.lunas ? 'Lunas' : 'Belum') + ' · ' + inv.kode + '</span>') : '<span style="font-size:11.5px;color:var(--muted)">est. ' + fmtRp(est) + '</span>';
     const _q = (en.title + ' ' + en.members.map(function (m) { return m.nama; }).join(' ')).toLowerCase().replace(/"/g, '');
-    return '<div class="inv-entity" data-q="' + _q + '"><div style="min-width:0"><div class="inv-entity-title">' + en.title + (en.isGroup ? ' 👥' : '') + '</div><div class="inv-entity-sub">' + sub + '</div>' + invBedaHTML(en) + '<div style="margin-top:4px">' + badge + '</div></div><div style="display:flex;gap:6px;flex-shrink:0">' + (inv ? '<button class="btn-sm" style="background:#25D366;color:#fff" onclick="kirimWAEntity(' + i + ')">💬 WA</button>' : '') + '<button class="btn-sm primary" onclick="openInvoice(' + i + ')">' + (inv ? 'Lihat' : 'Buat') + '</button></div></div>';
+    return '<div class="inv-entity" data-q="' + _q + '" data-beda="' + (en.members.some(invBeda) ? 1 : 0) + '"><div style="min-width:0"><div class="inv-entity-title">' + en.title + (en.isGroup ? ' 👥' : '') + '</div><div class="inv-entity-sub">' + sub + '</div>' + invBedaHTML(en) + '<div style="margin-top:4px">' + badge + '</div></div><div style="display:flex;gap:6px;flex-shrink:0">' + (inv ? '<button class="btn-sm" style="background:#25D366;color:#fff" onclick="kirimWAEntity(' + i + ')">💬 WA</button>' : '') + '<button class="btn-sm primary" onclick="openInvoice(' + i + ')">' + (inv ? 'Lihat' : 'Buat') + '</button></div></div>';
   }).join('');
 }
 
+let INV_FILTER = 'all';
+function setInvFilter(f) {
+  INV_FILTER = f;
+  document.querySelectorAll('.inv-ftab').forEach(function (b, i) { b.classList.toggle('on', (i === 0 && f === 'all') || (i === 1 && f === 'beda')); });
+  filterInvBuat();
+}
 function filterInvBuat() {
   const q = ((document.getElementById('inv-buat-search') || {}).value || '').toLowerCase().trim();
   let n = 0;
-  document.querySelectorAll('#inv-buat .inv-entity').forEach(function (d) { const ok = !q || (d.getAttribute('data-q') || '').indexOf(q) >= 0; d.style.display = ok ? '' : 'none'; if (ok) n++; });
+  document.querySelectorAll('#inv-buat .inv-entity').forEach(function (d) { const ok = (!q || (d.getAttribute('data-q') || '').indexOf(q) >= 0) && (INV_FILTER !== 'beda' || d.getAttribute('data-beda') === '1'); d.style.display = ok ? '' : 'none'; if (ok) n++; });
   let em = document.getElementById('inv-buat-empty');
-  if (!n && q) { if (!em) { em = document.createElement('div'); em.id = 'inv-buat-empty'; em.style.cssText = 'text-align:center;color:var(--muted);font-size:13px;padding:12px'; document.getElementById('inv-buat').appendChild(em); } em.textContent = 'Tidak ada yang cocok "' + q + '"'; em.style.display = ''; }
+  if (!n && (q || INV_FILTER === 'beda')) { if (!em) { em = document.createElement('div'); em.id = 'inv-buat-empty'; em.style.cssText = 'text-align:center;color:var(--muted);font-size:13px;padding:12px'; document.getElementById('inv-buat').appendChild(em); } em.textContent = q ? ('Tidak ada yang cocok "' + q + '"') : '✓ Tidak ada murid yang datanya beda'; em.style.display = ''; }
   else if (em) em.style.display = 'none';
 }
 
