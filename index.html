@@ -2260,7 +2260,10 @@ let invTarif = {};
 
 // Sumber jumlah les: default absensi; bisa dipilih 'laporan' per murid per bulan bila angkanya beda
 function invSrcKey(nama) { return 'sppc_src_' + invBulan() + '_' + String(nama).trim().toLowerCase(); }
-function invSrc(m) { try { return localStorage.getItem(invSrcKey(m.nama)) || ''; } catch (e) { return ''; } }
+function invSrcStored(m) { try { return localStorage.getItem(invSrcKey(m.nama)) || ''; } catch (e) { return ''; } }
+// kalau salah satu 0 → otomatis pakai yang ada nilainya (kecuali sudah dipilih manual)
+function invSrcAuto(m) { const h = Number(m.hadir) || 0, l = Number(m.laporan) || 0; if (h === 0 && l > 0) return 'laporan'; if (l === 0 && h > 0) return 'absensi'; return ''; }
+function invSrc(m) { return invSrcStored(m) || invSrcAuto(m); }
 function invBeda(m) { return m.laporan != null && (Number(m.laporan) || 0) !== (Number(m.hadir) || 0); }
 function invSesi(m) { return (invBeda(m) && invSrc(m) === 'laporan') ? (Number(m.laporan) || 0) : (Number(m.hadir) || 0); }
 function pilihSumber(nama, src) {
@@ -2273,7 +2276,7 @@ function invBedaHTML(en) {
   const beda = en.members.filter(invBeda); if (!beda.length) return '';
   return '<div class="inv-beda">' + beda.map(function (m) {
     const src = invSrc(m) === 'laporan' ? 'laporan' : 'absensi'; const nm = String(m.nama).replace(/'/g, "\\'");
-    return '<div class="ib-row"><span>⚠ <b>' + m.nama + '</b> beda data' + (invSrc(m) ? '' : ' <i>(belum dipilih)</i>') + '</span><span class="ib-btns">'
+    return '<div class="ib-row"><span>⚠ <b>' + m.nama + '</b> beda data' + (invSrcStored(m) ? '' : (invSrcAuto(m) ? ' <span style="color:#1a7a4a;font-weight:600">(otomatis)</span>' : ' <i>(belum dipilih)</i>')) + '</span><span class="ib-btns">'
       + '<button class="ib-btn' + (src === 'absensi' ? ' on' : '') + '" onclick="pilihSumber(\'' + nm + '\',\'absensi\')">Absensi ' + (Number(m.hadir) || 0) + '</button>'
       + '<button class="ib-btn' + (src === 'laporan' ? ' on' : '') + '" onclick="pilihSumber(\'' + nm + '\',\'laporan\')">Laporan ' + (Number(m.laporan) || 0) + '</button></span></div>';
   }).join('') + '</div>';
