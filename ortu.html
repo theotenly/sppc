@@ -71,6 +71,9 @@
   .lc-m { font-weight:600; font-size:14px; min-width:120px; }
   .lc-n { font-weight:800; color:#4a0d1a; font-size:15px; }
   .lc-t { flex-basis:100%; font-size:12px; color:#777; }
+  .pdf-bar { display:flex; gap:8px; align-items:center; margin:8px 0 12px; }
+  .pdf-bar select { flex:1; min-width:0; font-size:15px; padding:9px 10px; border:1px solid #e0d6c2; border-radius:10px; background:#fff; font-family:inherit; color:inherit; }
+  .pdf-bar button { border:none; background:#4a0d1a; color:#fff; font-weight:700; font-size:14px; padding:10px 14px; border-radius:10px; cursor:pointer; white-space:nowrap; font-family:inherit; }
   .fam-chips { display:flex; flex-wrap:wrap; gap:8px; margin:0 0 12px; }
   .fam-chip { border:1px solid var(--accent); background:#fff; color:var(--ink); border-radius:999px; padding:7px 16px; font-size:14px; font-weight:600; cursor:pointer; font-family:inherit; }
   .fam-chip.active { background:#4a0d1a; color:#fff; border-color:#4a0d1a; }
@@ -344,6 +347,41 @@ function famChipsHTML() {
     return '<button class="fam-chip' + (i === 0 ? ' active' : '') + '" onclick="pilihAnak(' + i + ')">' + f.murid.nama + '</button>';
   }).join('') + '</div>';
 }
+// ── Download laporan bulanan (PDF) ──
+let ORTU_CUR_NAMA = '';
+function escO(t) { return String(t == null ? '' : t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+function renderPdfBar() {
+  const el = document.getElementById('lap-pdf'); if (!el) return;
+  const months = []; ortuSorted.forEach(function (l) { const ym = String(l.tanggal).slice(0, 7); if (months.indexOf(ym) < 0) months.push(ym); });
+  if (!months.length) { el.innerHTML = ''; return; }
+  el.innerHTML = '<div class="pdf-bar"><select id="pdf-bulan">' + months.map(function (m) { return '<option value="' + m + '">' + labelBulanOrtu(m) + '</option>'; }).join('') + '</select>'
+    + '<button type="button" onclick="downloadLaporanPDF()">⬇️ ' + (LANG === 'en' ? 'Download PDF' : 'Download PDF') + '</button></div>';
+}
+function downloadLaporanPDF() {
+  const ym = (document.getElementById('pdf-bulan') || {}).value; if (!ym) return;
+  const rows = ortuSorted.filter(function (l) { return String(l.tanggal).slice(0, 7) === ym; }).sort(function (a, b) { return String(a.tanggal).localeCompare(String(b.tanggal)); });
+  if (!rows.length) return;
+  const en = LANG === 'en';
+  const MS = en ? ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'] : ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+  const tgl = function (t) { const d = new Date(String(t).slice(0, 10) + 'T00:00:00'); return d.getDate() + ' ' + MS[d.getMonth()]; };
+  const html = '<div style="font-family:Arial,Helvetica,sans-serif;color:#2b0714;max-width:720px;margin:0 auto;padding:6mm">'
+    + '<div style="text-align:center;border-bottom:3px solid #C9A24D;padding-bottom:12px;margin-bottom:16px">'
+    +   '<div style="font-family:Georgia,serif;font-size:20px;font-weight:700;letter-spacing:.03em;color:#4a0d1a">STANLEY PRIVATE PIANO COURSE</div>'
+    +   '<div style="font-size:12px;color:#888;letter-spacing:.12em;margin-top:4px">' + (en ? 'PIANO LESSON PROGRESS REPORT' : 'LAPORAN PROGRESS LES PIANO') + '</div></div>'
+    + '<table style="font-size:13.5px;margin-bottom:14px;border-collapse:collapse">'
+    +   '<tr><td style="padding:2px 14px 2px 0;color:#666">' + (en ? "Student's Name" : 'Nama Murid') + '</td><td>: <b>' + escO(ORTU_CUR_NAMA) + '</b></td></tr>'
+    +   '<tr><td style="padding:2px 14px 2px 0;color:#666">' + (en ? 'Month' : 'Bulan') + '</td><td>: ' + labelBulanOrtu(ym) + '</td></tr>'
+    +   '<tr><td style="padding:2px 14px 2px 0;color:#666">' + (en ? 'Lessons' : 'Jumlah pertemuan') + '</td><td>: ' + rows.length + '</td></tr></table>'
+    + '<table style="width:100%;border-collapse:collapse;font-size:12.5px"><thead><tr style="background:#4a0d1a;color:#fff">'
+    +   '<th style="padding:8px 10px;text-align:left;width:70px;border:1px solid #4a0d1a">' + (en ? 'Date' : 'Tanggal') + '</th><th style="padding:8px 10px;text-align:left;border:1px solid #4a0d1a">' + (en ? 'Lesson Material / Notes' : 'Materi / Catatan') + '</th></tr></thead><tbody>'
+    +   rows.map(function (l) { return '<tr style="page-break-inside:avoid"><td style="padding:9px 10px;border:1px solid #ddd;vertical-align:top;font-weight:700;white-space:nowrap">' + tgl(l.tanggal) + '</td><td style="padding:9px 10px;border:1px solid #ddd;white-space:pre-wrap;line-height:1.5">' + escO(l.materi || '—') + '</td></tr>'; }).join('')
+    + '</tbody></table><div style="margin-top:18px;font-size:11px;color:#999;text-align:center">Stanley Private Piano Course</div></div>';
+  document.getElementById('ortu-print').innerHTML = html;
+  const old = document.title; document.title = (en ? 'Report ' : 'Laporan ') + ORTU_CUR_NAMA + ' - ' + labelBulanOrtu(ym);
+  window.print();
+  setTimeout(function () { document.title = old; }, 1500);
+}
+
 function pilihAnak(i) {
   const f = ORTU_FAM[i]; if (!f) return;
   ortuSorted = [...f.laporan].sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal));
@@ -352,6 +390,7 @@ function pilihAnak(i) {
   const bd = document.getElementById('latest-badge'); if (bd) { bd.textContent = ortuSorted.length ? availMsg(ortuSorted.length) : ''; bd.style.display = ortuSorted.length ? '' : 'none'; }
   document.querySelectorAll('.fam-chip').forEach(function (b, j) { b.classList.toggle('active', j === i); });
   document.title = 'Progress ' + f.murid.nama + ' — SPPC';
+  ORTU_CUR_NAMA = f.murid.nama; renderPdfBar();
   loadLesCount(f.murid.nama);
   renderOrtuLaporan();
 }
@@ -378,6 +417,7 @@ function renderPage(murid, laporan) {
 
 ortuSorted = sorted;
   ortuPage = 1;
+  ORTU_CUR_NAMA = murid.nama;
 
   document.getElementById('app').innerHTML = `
     <header>
@@ -398,6 +438,7 @@ ortuSorted = sorted;
         ${famChipsHTML()}
         <div id="les-count"></div>
         <div class="latest-badge" id="latest-badge" style="${sorted.length ? '' : 'display:none'}">${sorted.length ? availMsg(sorted.length) : ''}</div>
+        <div id="lap-pdf"></div>
         <div id="laporan-container"></div>
       </div>
       <div id="tab-bayar" style="display:none">
@@ -410,6 +451,7 @@ ortuSorted = sorted;
     </div>
   `;
   renderOrtuLaporan();
+  renderPdfBar();
   loadLesCount(murid.nama);
   loadOrtuPay(murid);
 }
