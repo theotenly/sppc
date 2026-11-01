@@ -2294,14 +2294,18 @@ let invCurrent = null;
 let invLines = [];
 let invTarif = {};
 
-// Sumber jumlah les: default absensi; bisa dipilih 'laporan' per murid per bulan bila angkanya beda
+// Sumber jumlah les. Default 'gabungan' = absensi + tanggal yang ada laporan tapi absensinya ke-miss.
+// Laporan dihitung per TANGGAL unik (laporan dobel di tanggal yang sama tidak dihitung 2x).
 function invSrcKey(nama) { return 'sppc_src_' + invBulan() + '_' + String(nama).trim().toLowerCase(); }
 function invSrcStored(m) { try { return localStorage.getItem(invSrcKey(m.nama)) || ''; } catch (e) { return ''; } }
-// kalau salah satu 0 → otomatis pakai yang ada nilainya (kecuali sudah dipilih manual)
-function invSrcAuto(m) { const h = Number(m.hadir) || 0, l = Number(m.laporan) || 0; if (h === 0 && l > 0) return 'laporan'; if (l === 0 && h > 0) return 'absensi'; return ''; }
-function invSrc(m) { return invSrcStored(m) || invSrcAuto(m); }
-function invBeda(m) { return m.laporan != null && (Number(m.laporan) || 0) !== (Number(m.hadir) || 0); }
-function invSesi(m) { return (invBeda(m) && invSrc(m) === 'laporan') ? (Number(m.laporan) || 0) : (Number(m.hadir) || 0); }
+function invSrc(m) { return invSrcStored(m) || 'gabungan'; }
+function invAbsDates(m) { const o = {}; (INV_TGL[String(m.nama).trim().toLowerCase()] || []).forEach(function (x) { if (!x.sf) o[x.t] = 1; }); return o; }
+function invLapDates(m) { return Object.keys(LAP_TGL[String(m.nama).trim().toLowerCase()] || {}).sort(); }
+function invLapCount(m) { return LAP_LOADED ? invLapDates(m).length : (Number(m.laporan) || 0); }
+function invLapOnly(m) { const a = invAbsDates(m); return invLapDates(m).filter(function (t) { return !a[t]; }); }
+function invGabungan(m) { return (Number(m.hadir) || 0) + invLapOnly(m).length; }
+function invBeda(m) { return invLapCount(m) !== (Number(m.hadir) || 0) || invLapOnly(m).length > 0; }
+function invSesi(m) { const src = invSrc(m); if (src === 'absensi') return Number(m.hadir) || 0; if (src === 'laporan') return invLapCount(m); return invGabungan(m); }
 function pilihSumber(nama, src) {
   try { localStorage.setItem(invSrcKey(nama), src); } catch (e) {}
   showToast('✓ ' + nama + ': pakai data ' + src);
@@ -2311,10 +2315,11 @@ function pilihSumber(nama, src) {
 function invBedaHTML(en) {
   const beda = en.members.filter(invBeda); if (!beda.length) return '';
   return '<div class="inv-beda">' + beda.map(function (m) {
-    const src = invSrc(m) === 'laporan' ? 'laporan' : 'absensi'; const nm = String(m.nama).replace(/'/g, "\\'");
-    return '<div class="ib-row"><span>⚠ <b>' + m.nama + '</b> beda data' + (invSrcStored(m) ? '' : (invSrcAuto(m) ? ' <span style="color:#1a7a4a;font-weight:600">(otomatis)</span>' : ' <i>(belum dipilih)</i>')) + '</span><span class="ib-btns">'
-      + '<button class="ib-btn' + (src === 'absensi' ? ' on' : '') + '" onclick="pilihSumber(\'' + nm + '\',\'absensi\')">Absensi ' + (Number(m.hadir) || 0) + '</button>'
-      + '<button class="ib-btn' + (src === 'laporan' ? ' on' : '') + '" onclick="pilihSumber(\'' + nm + '\',\'laporan\')">Laporan ' + (Number(m.laporan) || 0) + '</button></span></div>';
+    const src = invSrc(m); const nm = String(m.nama).replace(/'/g, "\\'");
+    const lo = invLapOnly(m).map(function (t) { return +t.slice(8, 10); });
+    const b = function (key, lbl, n) { return '<button class="ib-btn' + (src === key ? ' on' : '') + '" onclick="pilihSumber(\'' + nm + '\',\'' + key + '\')">' + lbl + ' ' + n + '</button>'; };
+    return '<div class="ib-row"><span>⚠ <b>' + m.nama + '</b> beda data' + (lo.length ? ' · absensi ke-miss tgl <b>' + lo.join(', ') + '</b>' : '') + (invSrcStored(m) ? '' : ' <span style="color:#1a7a4a;font-weight:600">(otomatis gabungan)</span>') + '</span><span class="ib-btns">'
+      + b('gabungan', 'Gabungan', invGabungan(m)) + b('absensi', 'Absensi', Number(m.hadir) || 0) + b('laporan', 'Laporan', invLapCount(m)) + '</span></div>';
   }).join('') + '</div>';
 }
 function fmtRp(n) { return 'Rp ' + (Number(n) || 0).toLocaleString('id-ID'); }
@@ -2352,8 +2357,9 @@ async function _loadInvBuat() {
   if (!invEntities.length) { el.innerHTML = '<div class="empty" style="padding:1.25rem;text-align:center;color:var(--muted);font-size:13px">Belum ada aktivitas les/absensi bulan ini.</div>'; return; }
   const _head = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:8px;flex-wrap:wrap"><span style="font-size:12px;color:var(--muted)">' + invEntities.length + ' tagihan · ' + labelBulan(invBulan()) + '</span><span style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn-sm" style="background:#25D366;color:#fff" onclick="kirimWASemua()">💬 WA Semua</button><button class="btn-sm primary" id="inv-buatsemua-btn" onclick="buatInvoiceSemua()">🧾 Buat / Perbarui Semua</button></span></div>';
   const _search = '<input type="text" id="inv-buat-search" placeholder="🔍 Cari nama murid / grup..." oninput="filterInvBuat()" autocomplete="off" style="width:100%;font-size:14px;padding:9px 12px;margin-bottom:10px">';
-  const _nBeda = invEntities.reduce(function (a, en) { return a + en.members.filter(function (m) { return invBeda(m) && !invSrc(m); }).length; }, 0);
-  const _banner = _nBeda ? '<div class="inv-beda-banner">⚠ ' + _nBeda + ' murid jumlah <b>laporan & absensi beda</b> — pilih data yang dipakai di tiap kartu (default: absensi).</div>' : '';
+  const _nBeda = invEntities.reduce(function (a, en) { return a + en.members.filter(function (m) { return invBeda(m) && !invSrcStored(m); }).length; }, 0);
+  const _banner = (_nBeda ? '<div class="inv-beda-banner">⚠ ' + _nBeda + ' murid jumlah <b>laporan & absensi beda</b> — otomatis pakai <b>gabungan</b> (absensi + tanggal laporan yang absensinya ke-miss). Bisa diganti di tiap kartu.</div>' : '')
+    + (LAP_DUP.length ? '<div class="inv-beda-banner" style="background:#fdecea;border-color:#f3c2bd;color:#8a1c12">🔁 ' + LAP_DUP.length + ' laporan dobel (tanggal sama) — dihitung 1x saja. <button class="ib-btn" onclick="hapusLaporanDobel()">Bersihkan</button></div>' : '');
   const _nEnBeda = invEntities.filter(function (en) { return en.members.some(invBeda); }).length;
   const _tabs = '<div class="inv-ftabs"><button class="inv-ftab' + (INV_FILTER === 'all' ? ' on' : '') + '" onclick="setInvFilter(\'all\')">Semua (' + invEntities.length + ')</button>'
     + '<button class="inv-ftab warn' + (INV_FILTER === 'beda' ? ' on' : '') + '" onclick="setInvFilter(\'beda\')">⚠ Beda data (' + _nEnBeda + ')</button></div>';
@@ -2387,7 +2393,7 @@ function filterInvBuat() {
 async function buatInvoiceSemua() {
   if (!invEntities.length) return;
   const adaLama = invEntities.filter(function (e) { return e.invoice; }).length;
-  const _belum = []; invEntities.forEach(function (en) { en.members.forEach(function (m) { if (invBeda(m) && !invSrc(m)) _belum.push(m.nama + ' (absensi ' + (m.hadir || 0) + ' / laporan ' + (m.laporan || 0) + ')'); }); });
+  const _belum = [];
   if (_belum.length && !confirm('⚠ ' + _belum.length + ' murid datanya beda & belum dipilih:\n\n' + _belum.join('\n') + '\n\nOK = lanjut pakai ABSENSI\nBatal = pilih dulu di daftar')) return;
   let msg = 'Buat/perbarui invoice untuk ' + invEntities.length + ' tagihan bulan ' + labelBulan(invBulan()) + '?';
   if (adaLama) msg += '\n\n' + adaLama + ' invoice yang sudah ada akan DITIMPA dengan hitungan terbaru (nomor & status lunas tetap). Perubahan manual pada invoice itu akan hilang.';
@@ -2429,11 +2435,41 @@ function openInvoice(i) {
 
 // ── Tanggal-tanggal les per murid (info saja) ──
 let INV_TGL = {};
+let LAP_TGL = {}, LAP_DUP = [], LAP_LOADED = false;
+async function hapusLaporanDobel() {
+  if (!LAP_DUP.length) return;
+  const sama = LAP_DUP.filter(function (d) { return d.sama; }), beda = LAP_DUP.filter(function (d) { return !d.sama; });
+  let msg = 'Hapus ' + sama.length + ' laporan dobel yang isinya sama persis?';
+  if (beda.length) msg += '\n\n' + beda.length + ' laporan dobel isinya berbeda (tidak dihapus, cek manual): ' + beda.map(function (d) { return d.nama + ' ' + d.tanggal.slice(8); }).join(', ');
+  if (!sama.length) { alert(msg.replace('Hapus 0 laporan dobel yang isinya sama persis?\n\n', '')); return; }
+  if (!confirm(msg)) return;
+  let ok = 0;
+  for (const d of sama) { const r = await sb.from('laporan').delete().eq('id', d.id); if (!r.error) ok++; }
+  showToast('✓ ' + ok + ' laporan dobel dihapus');
+  laporanCache = {};
+  loadInvBuat();
+}
+
 async function loadInvTanggal(ym) {
-  INV_TGL = {};
+  INV_TGL = {}; LAP_TGL = {}; LAP_DUP = []; LAP_LOADED = false;
+  const y = +ym.slice(0, 4), mo = +ym.slice(5, 7);
+  const next = (mo === 12 ? (y + 1) + '-01' : y + '-' + String(mo + 1).padStart(2, '0')) + '-01';
   try {
-    const y = +ym.slice(0, 4), mo = +ym.slice(5, 7);
-    const next = (mo === 12 ? (y + 1) + '-01' : y + '-' + String(mo + 1).padStart(2, '0')) + '-01';
+    const lr = await sb.from('laporan').select('id,murid_id,tanggal,materi').gte('tanggal', ym + '-01').lt('tanggal', next).order('id');
+    if (!lr.error) {
+      const idNama = {}; students.forEach(function (st) { idNama[st.id] = String(st.nama).trim().toLowerCase(); });
+      const seen = {};
+      (lr.data || []).forEach(function (x) {
+        const k = idNama[x.murid_id]; if (!k) return;
+        (LAP_TGL[k] = LAP_TGL[k] || {})[x.tanggal] = 1;
+        const key = x.murid_id + '|' + x.tanggal;
+        if (seen[key]) LAP_DUP.push({ id: x.id, keep: seen[key].id, sama: String(seen[key].materi || '').trim() === String(x.materi || '').trim(), nama: k, tanggal: x.tanggal });
+        else seen[key] = x;
+      });
+      LAP_LOADED = true;
+    }
+  } catch (e) {}
+  try {
     const r = await sb.from('absensi_harian').select('nama,tanggal,jenis,jumlah').gte('tanggal', ym + '-01').lt('tanggal', next).order('tanggal');
     (r.data || []).forEach(function (x) {
       const j = String(x.jenis || 'hadir').toLowerCase(); if ((Number(x.jumlah) || 0) <= 0) return;
@@ -2449,6 +2485,7 @@ function grupTransport(en) {
   let ada = false;
   en.members.forEach(function (m) {
     (INV_TGL[String(m.nama).trim().toLowerCase()] || []).forEach(function (x) { ada = true; if (!x.sf) days[x.t] = 1; });
+    if (invSrc(m) !== 'absensi') invLapOnly(m).forEach(function (t) { ada = true; days[t] = 1; });
   });
   let qty = Object.keys(days).length;
   if (!ada) { // cadangan kalau data tanggal gagal dimuat: pakai sesi terbanyak
@@ -2458,8 +2495,11 @@ function grupTransport(en) {
 }
 
 function tglLesOf(nama) {
-  const arr = INV_TGL[String(nama).trim().toLowerCase()] || []; if (!arr.length) return '';
-  return arr.map(function (x) { const d = +String(x.t).slice(8, 10); return (x.sf ? '<span title="Schedule fee" style="color:#b3402f">' + d + '·fee</span>' : String(d)) + (x.n > 1 ? '×' + x.n : ''); }).join(', ');
+  const arr = (INV_TGL[String(nama).trim().toLowerCase()] || []).slice();
+  invLapOnly({ nama: nama }).forEach(function (t) { arr.push({ t: t, n: 1, lap: true }); });
+  if (!arr.length) return '';
+  arr.sort(function (a, b) { return String(a.t).localeCompare(String(b.t)); });
+  return arr.map(function (x) { const d = +String(x.t).slice(8, 10); return (x.sf ? '<span title="Schedule fee" style="color:#b3402f">' + d + '·fee</span>' : (x.lap ? '<span title="Ada laporan, absensi ke-miss" style="color:#b36b00;font-weight:600">' + d + '📝</span>' : String(d))) + (x.n > 1 ? '×' + x.n : ''); }).join(', ');
 }
 
 function renderInvDetail() {
@@ -2864,6 +2904,14 @@ async function submitLaporan() {
   if (!s) { showToast('⚠ Pilih murid dulu'); return; }
   const materi = v('materi');
   if (!materi) { showToast('⚠ Isi materi belajar dulu'); return; }
+  if (window._lapSaving) return;
+  const _tg = getTglInput();
+  const _sudah = (laporanCache[s.id] || []).find(function (l) { return String(l.tanggal).slice(0, 10) === _tg; });
+  if (_sudah) {
+    if (String(_sudah.materi || '').trim() === materi.trim()) { showToast('ℹ️ Laporan ini sudah tersimpan (tidak disimpan 2x)'); return; }
+    if (!confirm(s.nama + ' sudah punya laporan di tanggal ini.\n\nOK = simpan sebagai laporan tambahan\nBatal = jangan simpan (edit yang lama saja di Riwayat)')) return;
+  }
+  window._lapSaving = true;
 
   const btn = document.getElementById('btn-submit');
   btn.disabled = true;
@@ -2888,6 +2936,7 @@ async function submitLaporan() {
   } catch(e) {
     showToast('⚠ Gagal simpan: ' + e.message);
   } finally {
+    window._lapSaving = false;
     btn.disabled = false;
     btn.innerHTML = '💾 Simpan Laporan';
   }
