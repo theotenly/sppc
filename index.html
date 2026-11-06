@@ -441,7 +441,7 @@
   .ic-col{flex:1;display:flex;flex-direction:column;align-items:center;height:100%;cursor:pointer;min-width:0}
   .ic-val{font-size:9.5px;color:var(--muted);height:14px;white-space:nowrap}
   .ic-bar{flex:1;width:100%;max-width:30px;position:relative}
-  .ic-t,.ic-l,.ic-n{position:absolute;left:0;right:0;bottom:0;border-radius:5px 5px 0 0}
+  .ic-t,.ic-l,.ic-n,.ic-j{position:absolute;left:0;right:0;bottom:0;border-radius:5px 5px 0 0}
   .ic-t{background:#ecdcb4}
   .ic-l{background:#4a0d1a}
   .ic-col:hover .ic-t{background:#e2c98a}
@@ -459,6 +459,9 @@
   .na-rk-table td{padding:8px 6px;border-bottom:1px solid var(--cream)}
   .na-rk-table .num{text-align:right;white-space:nowrap}
   .na-rk-table small{color:var(--muted)}
+  .ic-j{background:#3f7d6a}
+  .pd-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px}
+  .pd-form .field{margin:0}
 </style>
 </head>
 <body>
@@ -834,15 +837,40 @@
       <div id="na-list"></div>
       <div id="na-pager" style="display:flex;justify-content:center;gap:10px;margin-top:12px"></div>
     </div>
+  </div>
+
+  <!-- PAGE: PENDAPATAN & JASA -->
+  <div class="page" id="page-pendapatan">
     <div class="section">
-      <div class="section-header"><div class="section-header-left"><div class="section-icon">💰</div><div class="section-title">Pendapatan Not Angka per Bulan</div></div></div>
-      <div style="font-size:12px;color:var(--muted);margin-bottom:10px">Untuk bulan yang sudah lewat (sebelum harga per order dicatat), isi saja <b>total pendapatan bulan itu</b>. Masuk ke grafik pemasukan di Keuangan.</div>
-      <div class="na-rk-form">
-        <input type="month" id="na-rk-bulan">
-        <input type="number" id="na-rk-total" inputmode="numeric" min="0" placeholder="Total (Rp), cth. 1500000">
-        <button class="btn-sm primary" onclick="simpanRekapNA()">Simpan</button>
+      <div class="section-header"><div class="section-header-left"><div class="section-icon">📊</div><div class="section-title">Ringkasan per Bulan</div></div>
+        <div class="lap-month-nav" style="margin:0"><button onclick="pdYear(-1)">‹</button><strong id="pd-year"></strong><button onclick="pdYear(1)">›</button></div></div>
+      <div id="pd-stats" class="ic-stats"></div>
+      <div id="pd-ringkasan"></div>
+    </div>
+    <div class="section">
+      <div class="section-header"><div class="section-header-left"><div class="section-icon">➕</div><div class="section-title">Catat Pemasukan</div></div></div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:10px">Order not angka baru cukup isi harga di form order. Di sini untuk <b>total bulan lalu</b> atau <b>jasa lain</b> (pelayanan, website, dll).</div>
+      <div class="pd-form">
+        <div class="field"><label>Jenis</label><select id="pd-jenis" onchange="pdJenisChange()">
+          <option value="rekap">🎼 Not Angka — total bulanan</option>
+          <option value="pelayanan">🙏 Pelayanan (main musik)</option>
+          <option value="website">💻 Website</option>
+          <option value="lainnya">✨ Jasa lainnya</option>
+        </select></div>
+        <div class="field" id="pd-bulan-wrap"><label>Bulan</label><input type="month" id="pd-bulan"></div>
+        <div class="field" id="pd-tgl-wrap" style="display:none"><label>Tanggal</label><input type="date" id="pd-tgl"></div>
+        <div class="field" id="pd-nama-wrap" style="display:none"><label>Klien</label><input type="text" id="pd-nama" placeholder="cth. GKI Kebayoran / Bu Rina"></div>
+        <div class="field" id="pd-ket-wrap" style="display:none"><label>Keterangan</label><input type="text" id="pd-ket" placeholder="cth. Main piano pernikahan / Landing page"></div>
+        <div class="field"><label>Jumlah (Rp)</label><input type="number" id="pd-jumlah" inputmode="numeric" min="0" placeholder="cth. 1500000"></div>
       </div>
-      <div id="na-rk-list"></div>
+      <div style="display:flex;gap:8px;margin-top:10px"><button class="btn-sm primary" id="pd-save" onclick="simpanPemasukan()">💾 Simpan</button><button class="btn-sm" id="pd-cancel" style="display:none" onclick="batalEditPd()">Batal</button></div>
+    </div>
+    <div class="section">
+      <div class="section-header"><div class="section-header-left"><div class="section-icon">🧾</div><div class="section-title">History Jasa</div></div></div>
+      <div class="inv-ftabs" id="pd-filter"></div>
+      <input type="text" id="pd-search" placeholder="🔍 Cari klien / keterangan..." oninput="renderPdHistory()" style="width:100%;font-size:14px;padding:9px 12px;margin-bottom:10px">
+      <div id="pd-history"></div>
+      <div id="pd-pager" style="display:flex;justify-content:center;gap:10px;margin-top:10px"></div>
     </div>
   </div>
 
@@ -1239,7 +1267,7 @@ const NAV_GROUPS = {
   isi:   { label: '📝 Isi Data', pages: [['laporan','📋 Laporan'],['absensi','🗓️ Absensi']] },
   uang:  { label: '💰 Keuangan', pages: [['invoice','🧾 Invoice'],['bayar','💰 Bayar'],['rekap','📊 Rekap'],['setting','⚙️ Setting']] },
   murid: { label: '👥 Murid', pages: [['murid','👥 Data Murid']] },
-  notangka: { label: '🎼 Not Angka', pages: [['notangka','🎼 Follow-up Order']] }
+  notangka: { label: '🎼 Not Angka', pages: [['notangka','🎼 Order & Follow-up'],['pendapatan','💰 Pendapatan & Jasa']] }
 };
 const PAGE_GROUP = {};
 Object.keys(NAV_GROUPS).forEach(function (g) { NAV_GROUPS[g].pages.forEach(function (pr) { PAGE_GROUP[pr[0]] = g; }); });
@@ -1430,6 +1458,117 @@ async function hapusRekapNA(id) {
   showToast('✓ Dihapus'); loadNotangka();
 }
 
+
+// ══ Pendapatan & Jasa (not angka + jasa tambahan) ══
+const PD_JENIS = { notangka: '🎼 Not Angka', pelayanan: '🙏 Pelayanan', website: '💻 Website', lainnya: '✨ Lainnya' };
+let PD_YEAR = new Date().getFullYear(), PD_FILTER = 'all', PD_PAGE = 1, PD_EDIT = null; const PD_PER = 15;
+function pdYear(d) { PD_YEAR += d; renderPendapatan(); }
+function pdKat(j) { return j.kategori || 'notangka'; }
+async function loadPendapatan() {
+  const el = document.getElementById('pd-ringkasan'); if (el) el.innerHTML = '<div class="empty"><div class="spinner dark"></div></div>';
+  try { naJual = (await sb.from('notangka_penjualan').select('*').order('tanggal')).data || []; } catch (e) { naJual = []; }
+  if (!naData || !naData.length) { try { naData = (await sb.from('notangka_order').select('*')).data || []; } catch (e) {} }
+  const b = document.getElementById('pd-bulan'); if (b && !b.value) { const d = new Date(); d.setMonth(d.getMonth() - 1); b.value = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); }
+  const t = document.getElementById('pd-tgl'); if (t && !t.value) t.value = todayISO();
+  renderPendapatan();
+}
+function pdJenisChange() {
+  const j = document.getElementById('pd-jenis').value, rk = j === 'rekap';
+  document.getElementById('pd-bulan-wrap').style.display = rk ? '' : 'none';
+  ['pd-tgl-wrap', 'pd-nama-wrap', 'pd-ket-wrap'].forEach(function (id) { document.getElementById(id).style.display = rk ? 'none' : ''; });
+}
+function renderPendapatan() {
+  const yl = document.getElementById('pd-year'); if (yl) yl.textContent = PD_YEAR;
+  const M = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+  const rows = M.map(function (lbl, i) { return { k: PD_YEAR + '-' + String(i + 1).padStart(2, '0'), lbl: lbl, na: 0, nOrder: 0, lain: {} }; });
+  naJual.forEach(function (j) {
+    const k = String(j.tanggal).slice(0, 7); const r = rows.find(function (x) { return x.k === k; }); if (!r) return;
+    const kat = pdKat(j), h = Number(j.harga) || 0;
+    if (kat === 'notangka') { r.na += h; if (j.order_id) r.nOrder++; } else r.lain[kat] = (r.lain[kat] || 0) + h;
+  });
+  const sumLain = function (r) { return Object.keys(r.lain).reduce(function (a, k) { return a + r.lain[k]; }, 0); };
+  const totNA = rows.reduce(function (a, r) { return a + r.na; }, 0), totL = rows.reduce(function (a, r) { return a + sumLain(r); }, 0);
+  const aktif = rows.filter(function (r) { return r.na + sumLain(r) > 0; });
+  document.getElementById('pd-stats').innerHTML =
+      '<div class="bstat"><div class="bstat-num">' + fmtRp(totNA + totL) + '</div><div class="bstat-lbl">Total ' + PD_YEAR + '</div></div>'
+    + '<div class="bstat"><div class="bstat-num">' + fmtRp(totNA) + '</div><div class="bstat-lbl">Not angka</div></div>'
+    + '<div class="bstat"><div class="bstat-num">' + fmtRp(totL) + '</div><div class="bstat-lbl">Jasa lain</div></div>'
+    + '<div class="bstat"><div class="bstat-num">' + fmtRp(aktif.length ? Math.round((totNA + totL) / aktif.length) : 0) + '</div><div class="bstat-lbl">Rata-rata / bln</div></div>';
+  const el = document.getElementById('pd-ringkasan');
+  el.innerHTML = aktif.length ? '<table class="na-rk-table"><thead><tr><th>Bulan</th><th class="num">Not angka</th><th class="num">Jasa lain</th><th class="num">Total</th></tr></thead><tbody>'
+    + aktif.slice().reverse().map(function (r) {
+      const ln = Object.keys(r.lain).map(function (k) { return (PD_JENIS[k] || k).split(' ')[0] + ' ' + fmtRp(r.lain[k]); }).join('<br>');
+      return '<tr><td>' + labelBulan(r.k) + '</td><td class="num">' + (r.na ? fmtRp(r.na) + (r.nOrder ? ' <small>(' + r.nOrder + ' order)</small>' : '') : '—') + '</td><td class="num">' + (ln || '—') + '</td><td class="num"><b>' + fmtRp(r.na + sumLain(r)) + '</b></td></tr>';
+    }).join('') + '</tbody></table>'
+    : '<div class="empty" style="padding:.75rem;text-align:center;color:var(--muted);font-size:13px">Belum ada pemasukan di ' + PD_YEAR + '.</div>';
+  renderPdHistory();
+}
+function setPdFilter(f) { PD_FILTER = f; PD_PAGE = 1; renderPdHistory(); }
+function pdGoto(d) { PD_PAGE += d; renderPdHistory(); }
+function renderPdHistory() {
+  const cnt = { all: naJual.length }; naJual.forEach(function (j) { const k = pdKat(j); cnt[k] = (cnt[k] || 0) + 1; });
+  document.getElementById('pd-filter').innerHTML = [['all', 'Semua'], ['notangka', '🎼 Not Angka'], ['pelayanan', '🙏 Pelayanan'], ['website', '💻 Website'], ['lainnya', '✨ Lainnya']]
+    .filter(function (f) { return f[0] === 'all' || cnt[f[0]]; })
+    .map(function (f) { return '<button class="inv-ftab' + (PD_FILTER === f[0] ? ' on' : '') + '" onclick="setPdFilter(\'' + f[0] + '\')">' + f[1] + ' (' + (cnt[f[0]] || 0) + ')</button>'; }).join('');
+  const q = ((document.getElementById('pd-search') || {}).value || '').toLowerCase().trim();
+  let rows = naJual.slice().sort(function (a, b) { return String(b.tanggal).localeCompare(String(a.tanggal)) || (b.id - a.id); });
+  if (PD_FILTER !== 'all') rows = rows.filter(function (j) { return pdKat(j) === PD_FILTER; });
+  if (q) rows = rows.filter(function (j) { return (String(j.nama || '') + ' ' + String(j.detail || '')).toLowerCase().indexOf(q) >= 0; });
+  const pages = Math.max(1, Math.ceil(rows.length / PD_PER)); if (PD_PAGE > pages) PD_PAGE = pages; if (PD_PAGE < 1) PD_PAGE = 1;
+  const slice = rows.slice((PD_PAGE - 1) * PD_PER, PD_PAGE * PD_PER);
+  const el = document.getElementById('pd-history');
+  el.innerHTML = slice.length ? slice.map(function (j) {
+    const rk = j.detail === NA_RK && !j.order_id;
+    const judul = rk ? 'Total not angka ' + labelBulan(String(j.tanggal).slice(0, 7)) : (j.nama || '—');
+    const sub = (PD_JENIS[pdKat(j)] || pdKat(j)) + ' · ' + (rk ? 'input manual' : fmtDMY(String(j.tanggal).slice(0, 10))) + (!rk && j.detail ? ' · ' + lapEsc(j.detail) : '') + (j.order_id ? ' · dari order' : '');
+    const act = j.order_id ? '<button class="btn-sm" title="Ubah lewat Edit order" onclick="showPage(\'notangka\');setTimeout(function(){editNotangka(' + j.order_id + ')},300)">✏️</button>'
+      : '<button class="btn-sm" onclick="editPemasukan(' + j.id + ')">✏️</button><button class="btn-sm danger" onclick="hapusPemasukan(' + j.id + ')">🗑</button>';
+    return '<div class="inv-entity"><div style="min-width:0"><div class="inv-entity-title">' + lapEsc(judul) + '</div><div class="inv-entity-sub">' + sub + '</div></div><div style="display:flex;gap:6px;align-items:center;flex-shrink:0"><b style="white-space:nowrap">' + fmtRp(j.harga) + '</b>' + act + '</div></div>';
+  }).join('') : '<div class="empty" style="padding:.75rem;text-align:center;color:var(--muted);font-size:13px">Belum ada data.</div>';
+  document.getElementById('pd-pager').innerHTML = pages > 1 ? '<button class="btn-sm" ' + (PD_PAGE <= 1 ? 'disabled' : '') + ' onclick="pdGoto(-1)">‹</button><span style="font-size:12px;color:var(--muted);align-self:center">Hal ' + PD_PAGE + '/' + pages + '</span><button class="btn-sm" ' + (PD_PAGE >= pages ? 'disabled' : '') + ' onclick="pdGoto(1)">›</button>' : '';
+}
+function editPemasukan(id) {
+  const j = naJual.find(function (x) { return x.id === id; }); if (!j) return;
+  PD_EDIT = id;
+  const rk = j.detail === NA_RK && !j.order_id;
+  document.getElementById('pd-jenis').value = rk ? 'rekap' : pdKat(j); pdJenisChange();
+  if (rk) document.getElementById('pd-bulan').value = String(j.tanggal).slice(0, 7);
+  else { document.getElementById('pd-tgl').value = String(j.tanggal).slice(0, 10); document.getElementById('pd-nama').value = j.nama || ''; document.getElementById('pd-ket').value = j.detail || ''; }
+  document.getElementById('pd-jumlah').value = Number(j.harga) || '';
+  document.getElementById('pd-save').textContent = '💾 Update'; document.getElementById('pd-cancel').style.display = '';
+  document.getElementById('pd-jenis').scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+function batalEditPd() {
+  PD_EDIT = null; ['pd-nama', 'pd-ket', 'pd-jumlah'].forEach(function (id) { document.getElementById(id).value = ''; });
+  document.getElementById('pd-save').textContent = '💾 Simpan'; document.getElementById('pd-cancel').style.display = 'none';
+}
+async function simpanPemasukan() {
+  const jenis = document.getElementById('pd-jenis').value, jml = Number(document.getElementById('pd-jumlah').value) || 0;
+  if (jml <= 0) { showToast('⚠ Isi jumlah'); return; }
+  let row;
+  if (jenis === 'rekap') {
+    const k = document.getElementById('pd-bulan').value; if (!k) { showToast('⚠ Pilih bulan'); return; }
+    row = { order_id: null, nama: 'Total bulanan', tanggal: k + '-01', detail: NA_RK, harga: jml, kategori: 'notangka' };
+    if (!PD_EDIT) { const ex = naJual.find(function (x) { return x.detail === NA_RK && !x.order_id && String(x.tanggal).slice(0, 7) === k; }); if (ex) { if (!confirm('Total ' + labelBulan(k) + ' sudah ada (' + fmtRp(ex.harga) + '). Ganti jadi ' + fmtRp(jml) + '?')) return; PD_EDIT = ex.id; } }
+    const ord = naJual.filter(function (x) { return x.order_id && String(x.tanggal).slice(0, 7) === k; });
+    if (ord.length && !confirm(labelBulan(k) + ' sudah punya ' + ord.length + ' order dengan harga. Total manual akan DITAMBAHKAN. Lanjut?')) { PD_EDIT = null; return; }
+  } else {
+    const nama = document.getElementById('pd-nama').value.trim(), tgl = document.getElementById('pd-tgl').value || todayISO();
+    if (!nama) { showToast('⚠ Isi nama klien'); return; }
+    row = { order_id: null, nama: nama, tanggal: tgl, detail: document.getElementById('pd-ket').value.trim(), harga: jml, kategori: jenis };
+  }
+  const r = PD_EDIT ? await sb.from('notangka_penjualan').update(row).eq('id', PD_EDIT) : await sb.from('notangka_penjualan').insert(row);
+  if (r.error) { showToast('⚠ Gagal: ' + r.error.message); return; }
+  showToast('✓ Tersimpan · ' + fmtRp(jml));
+  batalEditPd(); loadPendapatan();
+}
+async function hapusPemasukan(id) {
+  if (!confirm('Hapus pemasukan ini?')) return;
+  const r = await sb.from('notangka_penjualan').delete().eq('id', id);
+  if (r.error) { showToast('⚠ Gagal: ' + r.error.message); return; }
+  showToast('✓ Dihapus'); loadPendapatan();
+}
+
 function renderNotangka() {
   const due = document.getElementById('na-due'); const up = document.getElementById('na-upcoming');
   if (!due) return;
@@ -1457,7 +1596,6 @@ function renderNotangka() {
   }
   if (up) up.innerHTML = upList.length ? upList.map(function (x) { return naCard(x.o, x.iso, false); }).join('') : '<div class="empty" style="padding:1rem;text-align:center;color:var(--muted);font-size:13px">Belum ada jadwal berikutnya.</div>';
   renderNaList();
-  renderRekapNA();
 }
 
 let naLetter = 'ALL', naPage = 1; const NA_PER = 10;
@@ -1714,6 +1852,7 @@ function showPage(name) {
   if (name === 'invoice') loadInvoice();
   if (name === 'setting') loadSetting();
   if (name === 'notangka') loadNotangka();
+  if (name === 'pendapatan') loadPendapatan();
 }
 
 // ── Students ──────────────────────────────────────────
@@ -2353,21 +2492,22 @@ async function loadBayarRingkasan() {
   el.innerHTML = '<div class="empty"><div class="spinner dark"></div></div>';
   try { bayarRingkasanData = await apiGet({ action: 'get_bayar_ringkasan' }) || []; }
   catch (e) { el.innerHTML = '<div class="empty">Gagal: ' + e.message + '</div>'; return; }
-  NA_BULAN = {};
-  try { const r = await sb.from('notangka_penjualan').select('tanggal,harga'); (r.data || []).forEach(function (j) { const k = String(j.tanggal).slice(0, 7); NA_BULAN[k] = (NA_BULAN[k] || 0) + (Number(j.harga) || 0); }); } catch (e) {}
+  NA_BULAN = {}; LAIN_BULAN = {};
+  try { const r = await sb.from('notangka_penjualan').select('tanggal,harga,kategori'); (r.data || []).forEach(function (j) { const k = String(j.tanggal).slice(0, 7); const tgt = (j.kategori && j.kategori !== 'notangka') ? LAIN_BULAN : NA_BULAN; tgt[k] = (tgt[k] || 0) + (Number(j.harga) || 0); }); } catch (e) {}
   renderBayarRingkasan();
   renderIncomeChart();
 }
 
 // ── Grafik pemasukan per bulan ──
-let CHART_YEAR = new Date().getFullYear(); let NA_BULAN = {};
+let CHART_YEAR = new Date().getFullYear(); let NA_BULAN = {}, LAIN_BULAN = {};
 function chartYear(d) { CHART_YEAR += d; renderIncomeChart(); }
 function renderIncomeChart() {
   const el = document.getElementById('income-chart'); if (!el) return;
   const yl = document.getElementById('chart-year'); if (yl) yl.textContent = CHART_YEAR;
   const by = {}; (bayarRingkasanData || []).forEach(function (r) { by[r.bulan] = r; });
   const M = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
-  const data = M.map(function (lbl, i) { const k = CHART_YEAR + '-' + String(i + 1).padStart(2, '0'); const r = by[k] || {}; return { lbl: lbl, k: k, tagih: Number(r.total) || 0, lunas: Number(r.total_lunas) || 0, na: NA_BULAN[k] || 0 }; });
+  const data = M.map(function (lbl, i) { const k = CHART_YEAR + '-' + String(i + 1).padStart(2, '0'); const r = by[k] || {}; return { lbl: lbl, k: k, tagih: Number(r.total) || 0, lunas: Number(r.total_lunas) || 0, na: (NA_BULAN[k] || 0), jl: (LAIN_BULAN[k] || 0) }; });
+  data.forEach(function (d) { d.naOnly = d.na; d.na = d.na + d.jl; });
   const max = Math.max.apply(null, [1].concat(data.map(function (d) { return d.tagih + d.na; })));
   const totT = data.reduce(function (a, d) { return a + d.tagih; }, 0), totL = data.reduce(function (a, d) { return a + d.lunas; }, 0), totN = data.reduce(function (a, d) { return a + d.na; }, 0);
   const aktif = data.filter(function (d) { return d.tagih + d.na > 0; });
@@ -2378,17 +2518,17 @@ function renderIncomeChart() {
   el.innerHTML = '<div class="ic-stats">'
       + '<div class="bstat"><div class="bstat-num">' + fmtRp(totL + totN) + '</div><div class="bstat-lbl">Total masuk</div></div>'
       + '<div class="bstat"><div class="bstat-num">' + fmtRp(totL) + '</div><div class="bstat-lbl">Les (lunas)</div></div>'
-      + '<div class="bstat"><div class="bstat-num">' + fmtRp(totN) + '</div><div class="bstat-lbl">Not angka</div></div>'
+      + '<div class="bstat"><div class="bstat-num">' + fmtRp(totN) + '</div><div class="bstat-lbl">Not angka & jasa</div></div>'
       + '<div class="bstat"><div class="bstat-num">' + fmtRp(totT - totL) + '</div><div class="bstat-lbl">Les belum lunas</div></div>'
       + '<div class="bstat"><div class="bstat-num">' + fmtRp(rata) + '</div><div class="bstat-lbl">Rata-rata masuk / bln</div></div></div>'
     + '<div class="ic-chart">' + data.map(function (d) {
       const ht = Math.round((d.tagih + d.na) / max * 100), hn = Math.round((d.lunas + d.na) / max * 100), hl = Math.round(d.lunas / max * 100);
       return '<div class="ic-col" title="' + d.lbl + ' ' + CHART_YEAR + ' · les ditagih ' + fmtRp(d.tagih) + ' · les lunas ' + fmtRp(d.lunas) + ' · not angka ' + fmtRp(d.na) + '" onclick="bukaBulanBayar && bukaBulanBayar(\'' + d.k + '\')">'
         + '<div class="ic-val">' + ((d.lunas + d.na) ? short(d.lunas + d.na) : '') + '</div>'
-        + '<div class="ic-bar"><div class="ic-t" style="height:' + ht + '%"></div><div class="ic-n" style="height:' + hn + '%"></div><div class="ic-l" style="height:' + hl + '%"></div></div>'
+        + '<div class="ic-bar"><div class="ic-t" style="height:' + ht + '%"></div><div class="ic-j" style="height:' + hn + '%"></div><div class="ic-n" style="height:' + Math.round((d.lunas + d.naOnly) / max * 100) + '%"></div><div class="ic-l" style="height:' + hl + '%"></div></div>'
         + '<div class="ic-lbl">' + d.lbl + '</div></div>';
     }).join('') + '</div>'
-    + '<div class="ic-legend"><span><i style="background:#4a0d1a"></i>Les lunas</span><span><i style="background:#C9A24D"></i>Not angka</span><span><i style="background:#ecdcb4"></i>Les belum lunas</span>' + (best ? '<span style="margin-left:auto">🏆 Tertinggi: ' + best.lbl + ' (' + fmtRp(best.lunas) + ')</span>' : '') + '</div>'
+    + '<div class="ic-legend"><span><i style="background:#4a0d1a"></i>Les lunas</span><span><i style="background:#C9A24D"></i>Not angka</span><span><i style="background:#3f7d6a"></i>Jasa lain</span><span><i style="background:#ecdcb4"></i>Les belum lunas</span>' + (best ? '<span style="margin-left:auto">🏆 Tertinggi: ' + best.lbl + ' (' + fmtRp(best.lunas) + ')</span>' : '') + '</div>'
     + '<div style="font-size:11px;color:var(--muted);margin-top:6px">Les dihitung per bulan tagihan (bulan les), not angka per tanggal order. Angka di atas batang = total masuk. Tap batang untuk detail pembayaran les.</div>';
 }
 
