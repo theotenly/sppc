@@ -310,7 +310,7 @@ async function loadFamily(murid, laporan) {
     const g = await sb.from('tarif').select('nama').eq('grup', grup);
     const names = (g.data || []).map(function (x) { return String(x.nama).trim().toLowerCase(); });
     const all = await sb.from('murid').select('*');
-    const others = (all.data || []).filter(function (m) { return m.id !== murid.id && names.indexOf(String(m.nama).trim().toLowerCase()) >= 0; });
+    const others = (all.data || []).filter(function (m) { return m.id !== murid.id && !m.berhenti && names.indexOf(String(m.nama).trim().toLowerCase()) >= 0; });
     if (!others.length) return;
     const ids = others.map(function (m) { return m.id; });
     const lr = await sb.from('laporan').select('*').in('murid_id', ids);
@@ -615,6 +615,7 @@ async function init() {
     if (res.error) throw new Error(res.error.message);
     const murid = res.data && res.data[0];
     if (!murid) throw new Error('Murid tidak ditemukan');
+    if (murid.berhenti) { renderError(LANG === 'en' ? 'This page is no longer active. Thank you for learning with Stanley Private Piano Course.' : 'Halaman ini sudah tidak aktif. Terima kasih sudah belajar bersama Stanley Private Piano Course.'); return; }
     ORTU_LINK = linkId;
     var _pref = null; try { _pref = localStorage.getItem('ortu_lang_' + linkId); } catch (e) {}
     LANG = _pref ? _pref : ((murid.bahasa === 'en') ? 'en' : 'id');

@@ -432,6 +432,33 @@
   .inv-ftab.warn:not(.on){border-color:#f0d9a8;background:#fff6e5;color:#7a4b00}
   .rekap-tgl{font-size:11px;color:#7a4b00;margin-top:3px;line-height:1.45;font-weight:400}
   .lap-pdf{width:auto!important;padding:0 10px;font-size:12px!important;font-weight:700;color:#4a0d1a;margin-left:6px}
+  .lt-wrap{display:inline-flex;align-items:stretch}
+  .lt-wrap .lt-chip{border-top-right-radius:0;border-bottom-right-radius:0}
+  .lt-wrap .lt-chip:last-child{border-radius:999px}
+  .lt-hadir{border:1px solid var(--accent);border-left:none;background:#fff8e6;color:#7a4b00;border-radius:0 999px 999px 0;padding:0 10px;font-size:11.5px;font-weight:700;cursor:pointer;font-family:inherit}
+  .ic-stats{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+  .ic-chart{display:flex;align-items:flex-end;gap:4px;height:190px;padding:4px 0;border-bottom:1px solid var(--border)}
+  .ic-col{flex:1;display:flex;flex-direction:column;align-items:center;height:100%;cursor:pointer;min-width:0}
+  .ic-val{font-size:9.5px;color:var(--muted);height:14px;white-space:nowrap}
+  .ic-bar{flex:1;width:100%;max-width:30px;position:relative}
+  .ic-t,.ic-l,.ic-n{position:absolute;left:0;right:0;bottom:0;border-radius:5px 5px 0 0}
+  .ic-t{background:#ecdcb4}
+  .ic-l{background:#4a0d1a}
+  .ic-col:hover .ic-t{background:#e2c98a}
+  .ic-lbl{font-size:10.5px;color:var(--muted);margin-top:4px}
+  .ic-legend{display:flex;gap:12px;flex-wrap:wrap;font-size:11.5px;color:var(--muted);margin-top:8px;align-items:center}
+  .ic-legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:-1px}
+  .ic-n{background:#C9A24D}
+  .stopped-box{margin-top:14px;border-top:1px dashed var(--border);padding-top:10px}
+  .stopped-box>summary{cursor:pointer;font-size:13px;color:var(--muted);font-weight:600;padding:4px 0 8px}
+  .student-card.stopped{opacity:.7;margin-bottom:8px}
+  .na-rk-form{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+  .na-rk-form input{flex:1;min-width:140px;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:14px}
+  .na-rk-table{width:100%;border-collapse:collapse;font-size:13px}
+  .na-rk-table th{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);text-align:left;padding:6px;border-bottom:1px solid var(--border)}
+  .na-rk-table td{padding:8px 6px;border-bottom:1px solid var(--cream)}
+  .na-rk-table .num{text-align:right;white-space:nowrap}
+  .na-rk-table small{color:var(--muted)}
 </style>
 </head>
 <body>
@@ -643,6 +670,16 @@
       <input type="text" id="bayar-ringkasan-search" placeholder="🔍 Cari bulan (mis. 2026-09 / September)..." oninput="renderBayarRingkasan()" style="width:100%;margin-bottom:12px">
       <div id="bayar-ringkasan"></div>
     </div>
+    <div class="section">
+      <div class="section-header">
+        <div class="section-header-left">
+          <div class="section-icon">📈</div>
+          <div class="section-title">Pemasukan per Bulan</div>
+        </div>
+        <div class="lap-month-nav" style="margin:0"><button onclick="chartYear(-1)">‹</button><strong id="chart-year"></strong><button onclick="chartYear(1)">›</button></div>
+      </div>
+      <div id="income-chart"></div>
+    </div>
   </div>
 
   <!-- PAGE: REKAP -->
@@ -777,7 +814,10 @@
           <div class="field" style="position:relative"><label>Nama Customer</label><input id="na-nama" type="text" placeholder="cth. Rani" autocomplete="off" oninput="naSuggest()" onblur="hideBoxLater('na-suggest')"><div id="na-suggest"></div></div>
           <div class="field"><label>No. WhatsApp</label><input id="na-wa" type="tel" placeholder="cth. 08123456789"></div>
         </div>
-        <div class="field" style="margin-bottom:12px"><label>Detail Pesanan</label><input id="na-detail" type="text" placeholder="cth. Not angka 'Bunga' 2 halaman"></div>
+        <div class="grid-2" style="margin-bottom:12px">
+          <div class="field"><label>Detail Pesanan</label><input id="na-detail" type="text" placeholder="cth. Not angka 'Bunga' 2 halaman"></div>
+          <div class="field"><label>Harga Jasa (Rp)</label><input id="na-harga" type="number" inputmode="numeric" min="0" placeholder="cth. 50000"></div>
+        </div>
         <div class="field" style="margin-bottom:12px"><label>Tanggal Order</label><span class="date-wrap" style="display:flex"><input type="text" id="na-tgl-disp" readonly onclick="openDatePicker('na-tgl')" placeholder="Pilih tanggal" style="cursor:pointer;background:#fff;font-size:14px;padding:9px 12px;border:1px solid var(--border);border-radius:8px;width:100%"><input type="date" id="na-tgl" class="date-hidden" onchange="syncDateDisplay('na-tgl')"></span></div>
         <div style="display:flex;gap:8px">
           <button class="btn-sm primary" id="na-save-btn" onclick="saveNotangka()">Simpan Order</button>
@@ -793,6 +833,16 @@
       <div id="na-alpha" style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:12px"></div>
       <div id="na-list"></div>
       <div id="na-pager" style="display:flex;justify-content:center;gap:10px;margin-top:12px"></div>
+    </div>
+    <div class="section">
+      <div class="section-header"><div class="section-header-left"><div class="section-icon">💰</div><div class="section-title">Pendapatan Not Angka per Bulan</div></div></div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:10px">Untuk bulan yang sudah lewat (sebelum harga per order dicatat), isi saja <b>total pendapatan bulan itu</b>. Masuk ke grafik pemasukan di Keuangan.</div>
+      <div class="na-rk-form">
+        <input type="month" id="na-rk-bulan">
+        <input type="number" id="na-rk-total" inputmode="numeric" min="0" placeholder="Total (Rp), cth. 1500000">
+        <button class="btn-sm primary" onclick="simpanRekapNA()">Simpan</button>
+      </div>
+      <div id="na-rk-list"></div>
     </div>
   </div>
 
@@ -892,7 +942,8 @@ async function apiGet(params) {
   if (a === 'get_roster_names') {
     const res = await sb.from('absensi_murid').select('nama');
     if (res.error) throw new Error(res.error.message);
-    return res.data;
+    const stop = await namaBerhentiSet();
+    return (res.data || []).filter(function (r) { return !stop[String(r.nama).trim().toLowerCase()]; });
   }
   if (a === 'get_absensi_data') { return await getAbsensiDataSupa(params.bulan); }
   if (a === 'get_absensi_tanggal') {
@@ -1002,10 +1053,16 @@ async function apiGet(params) {
   throw new Error('Unknown action: ' + a);
 }
 
+async function namaBerhentiSet() {
+  const o = {};
+  try { const r = await sb.from('murid').select('nama').not('berhenti', 'is', null); (r.data || []).forEach(function (m) { o[String(m.nama).trim().toLowerCase()] = 1; }); } catch (e) {}
+  return o;
+}
 async function getRosterSupa() {
   const res = await sb.from('absensi_murid').select('nama').order('nama');
   if (res.error) throw new Error(res.error.message);
-  return (res.data || []).map(function (r) { return r.nama; });
+  const stop = await namaBerhentiSet();
+  return (res.data || []).map(function (r) { return r.nama; }).filter(function (n) { return !stop[String(n).trim().toLowerCase()]; });
 }
 
 async function getAbsensiBulanSupa(bulan) {
@@ -1248,6 +1305,7 @@ function toggleNaForm() {
     naEditId = null; naReorder = false; naPickedName = null;
     document.getElementById('na-save-btn').textContent = 'Simpan Order';
     document.getElementById('na-nama').value = ''; document.getElementById('na-wa').value = ''; document.getElementById('na-detail').value = '';
+    { const h = document.getElementById('na-harga'); if (h) h.value = ''; }
     const s = document.getElementById('na-suggest'); if (s) { s.innerHTML = ''; s.style.display = 'none'; }
     const t = document.getElementById('na-tgl'); t.value = todayISO(); syncDateDisplay('na-tgl');
   }
@@ -1279,6 +1337,7 @@ function pickNaCustomer(id) {
   document.getElementById('na-nama').value = o.nama || '';
   document.getElementById('na-wa').value = o.wa || '';
   document.getElementById('na-detail').value = '';
+  { const h = document.getElementById('na-harga'); if (h) h.value = ''; }
   const box = document.getElementById('na-suggest'); box.innerHTML = ''; box.style.display = 'none';
   naEditId = o.id; naReorder = true; naPickedName = String(o.nama || '').toLowerCase().trim();
   document.getElementById('na-save-btn').textContent = 'Order Lagi (reset follow-up)';
@@ -1291,6 +1350,7 @@ function editNotangka(id) {
   document.getElementById('na-nama').value = o.nama || '';
   document.getElementById('na-wa').value = o.wa || '';
   document.getElementById('na-detail').value = o.detail || '';
+  { const h = document.getElementById('na-harga'); const lj = naLastJual(o); if (h) h.value = lj ? (Number(lj.harga) || '') : ''; }
   const t = document.getElementById('na-tgl'); t.value = o.tgl_order || todayISO(); syncDateDisplay('na-tgl');
   document.getElementById('na-form').classList.add('open');
   document.getElementById('na-save-btn').textContent = 'Update Order';
@@ -1308,7 +1368,66 @@ async function loadNotangka() {
   due.innerHTML = '<div class="empty"><div class="spinner dark"></div></div>'; if (up) up.innerHTML = '';
   try { naData = (await sb.from('notangka_order').select('*').order('tgl_order', { ascending: true })).data || []; }
   catch (e) { due.innerHTML = '<div class="empty">Gagal: ' + e.message + '</div>'; return; }
+  try { naJual = (await sb.from('notangka_penjualan').select('*').order('tanggal')).data || []; } catch (e) { naJual = []; }
   renderNotangka();
+}
+let naJual = [];
+function naJualOf(orderId) { return naJual.filter(function (j) { return j.order_id === orderId; }); }
+function naLastJual(o) { const js = naJualOf(o.id); return js.filter(function (j) { return String(j.tanggal) === String(o.tgl_order); }).pop() || null; }
+async function catatPenjualan(orderId, nama, tgl, detail, harga, mode) {
+  harga = Number(harga) || 0;
+  if (mode === 'edit') {
+    const ex = naJual.filter(function (j) { return j.order_id === orderId; }).sort(function (a, b) { return String(a.tanggal).localeCompare(String(b.tanggal)); }).pop();
+    if (ex) { const r = await sb.from('notangka_penjualan').update({ nama: nama, tanggal: tgl, detail: detail, harga: harga }).eq('id', ex.id); if (r.error) throw new Error(r.error.message); return; }
+  }
+  if (harga <= 0 && mode === 'edit') return;
+  const r = await sb.from('notangka_penjualan').insert({ order_id: orderId, nama: nama, tanggal: tgl, detail: detail, harga: harga });
+  if (r.error) throw new Error(r.error.message);
+}
+
+// ── Total pendapatan not angka per bulan (manual untuk bulan lalu) ──
+const NA_RK = '__rekap_bulanan__';
+function renderRekapNA() {
+  const el = document.getElementById('na-rk-list'); if (!el) return;
+  const bi = document.getElementById('na-rk-bulan');
+  if (bi && !bi.value) { const d = new Date(); d.setMonth(d.getMonth() - 1); bi.value = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); }
+  const by = {};
+  naJual.forEach(function (j) { const k = String(j.tanggal).slice(0, 7); if (!by[k]) by[k] = { manual: null, order: 0, n: 0 }; if (j.detail === NA_RK && !j.order_id) by[k].manual = j; else { by[k].order += Number(j.harga) || 0; by[k].n++; } });
+  const keys = Object.keys(by).sort().reverse();
+  if (!keys.length) { el.innerHTML = '<div class="empty" style="padding:.75rem;text-align:center;color:var(--muted);font-size:13px">Belum ada data.</div>'; return; }
+  el.innerHTML = '<table class="na-rk-table"><thead><tr><th>Bulan</th><th class="num">Total manual</th><th class="num">Dari order</th><th class="num">Jumlah</th><th></th></tr></thead><tbody>'
+    + keys.map(function (k) { const r = by[k]; const m = r.manual ? Number(r.manual.harga) || 0 : 0;
+      return '<tr><td>' + labelBulan(k) + '</td><td class="num">' + (r.manual ? fmtRp(m) : '—') + '</td><td class="num">' + (r.n ? fmtRp(r.order) + ' <small>(' + r.n + ')</small>' : '—') + '</td><td class="num"><b>' + fmtRp(m + r.order) + '</b></td>'
+        + '<td class="lap-act">' + (r.manual ? '<button title="Ubah" onclick="ubahRekapNA(\'' + k + '\')">✏️</button><button title="Hapus" onclick="hapusRekapNA(' + r.manual.id + ')">🗑</button>' : '') + '</td></tr>'; }).join('')
+    + '</tbody></table>';
+}
+function ubahRekapNA(k) {
+  const j = naJual.find(function (x) { return x.detail === NA_RK && !x.order_id && String(x.tanggal).slice(0, 7) === k; });
+  document.getElementById('na-rk-bulan').value = k;
+  document.getElementById('na-rk-total').value = j ? (Number(j.harga) || '') : '';
+  document.getElementById('na-rk-total').focus();
+}
+async function simpanRekapNA() {
+  const k = (document.getElementById('na-rk-bulan') || {}).value; const tot = Number((document.getElementById('na-rk-total') || {}).value) || 0;
+  if (!k) { showToast('⚠ Pilih bulan'); return; }
+  const ex = naJual.find(function (x) { return x.detail === NA_RK && !x.order_id && String(x.tanggal).slice(0, 7) === k; });
+  const ord = naJual.filter(function (x) { return x.order_id && String(x.tanggal).slice(0, 7) === k; });
+  if (ord.length && !confirm(labelBulan(k) + ' sudah punya ' + ord.length + ' order dengan harga. Total manual akan DITAMBAHKAN ke situ. Lanjut?')) return;
+  try {
+    let r;
+    if (ex) r = await sb.from('notangka_penjualan').update({ harga: tot }).eq('id', ex.id);
+    else r = await sb.from('notangka_penjualan').insert({ order_id: null, nama: 'Total bulanan', tanggal: k + '-01', detail: NA_RK, harga: tot });
+    if (r.error) throw new Error(r.error.message);
+    showToast('✓ Total ' + labelBulan(k) + ' disimpan: ' + fmtRp(tot));
+    document.getElementById('na-rk-total').value = '';
+    loadNotangka();
+  } catch (e) { showToast('⚠ Gagal: ' + e.message); }
+}
+async function hapusRekapNA(id) {
+  if (!confirm('Hapus total manual bulan ini?')) return;
+  const r = await sb.from('notangka_penjualan').delete().eq('id', id);
+  if (r.error) { showToast('⚠ Gagal: ' + r.error.message); return; }
+  showToast('✓ Dihapus'); loadNotangka();
 }
 
 function renderNotangka() {
@@ -1338,6 +1457,7 @@ function renderNotangka() {
   }
   if (up) up.innerHTML = upList.length ? upList.map(function (x) { return naCard(x.o, x.iso, false); }).join('') : '<div class="empty" style="padding:1rem;text-align:center;color:var(--muted);font-size:13px">Belum ada jadwal berikutnya.</div>';
   renderNaList();
+  renderRekapNA();
 }
 
 let naLetter = 'ALL', naPage = 1; const NA_PER = 10;
@@ -1392,7 +1512,8 @@ async function togglePriority(id) {
 function naListCard(o) {
   const nd = naNextDate(o);
   const status = o.dikerjakan ? '🛠 Sedang dikerjakan' : (o.silent ? '🔕 Silent · kontak disimpan' : (o.done ? '✓ Selesai' : ('Follow-up ' + (NA_OFFSETS[o.step || 0] ? NA_OFFSETS[o.step || 0].lbl : '') + (nd ? ' → ' + fmtDMY(naIso(nd)) : ''))));
-  const sub = (o.wa ? o.wa + ' · ' : '') + (o.detail ? o.detail + ' · ' : '') + 'order ' + fmtDMY(o.tgl_order);
+  const _js = naJualOf(o.id); const _tot = _js.reduce(function (a, j) { return a + (Number(j.harga) || 0); }, 0);
+  const sub = (o.wa ? o.wa + ' · ' : '') + (o.detail ? o.detail + ' · ' : '') + 'order ' + fmtDMY(o.tgl_order) + (_tot ? ' · 💰 ' + fmtRp(_tot) : '');
   const active = !o.done && !o.silent;
   const badge = naTierBadge(o);
   const btns = '<button class="btn-sm" onclick="togglePriority(' + o.id + ')" title="Tandai / lepas priority">' + (o.priority ? '⭐' : '☆') + '</button>'
@@ -1407,7 +1528,11 @@ async function reorderNotangka(id) {
   if (!confirm('Customer ini order lagi? Order masuk ke Perlu Dikerjakan lagi.')) return;
   const o = naData.find(function (x) { return x.id === id; });
   const cnt = (((o && o.order_count) || 1) + 1);
-  try { await sb.from('notangka_order').update({ step: 0, done: false, silent: false, tgl_order: todayISO(), tgl_selesai: null, dikerjakan: true, order_count: cnt }).eq('id', id); showToast('✓ Order baru (' + cnt + '×) · masuk Perlu Dikerjakan'); loadNotangka(); }
+  const hs = prompt('Harga jasa order ini (Rp)? Kosongkan kalau belum tahu.', '');
+  if (hs === null) return;
+  try { await sb.from('notangka_order').update({ step: 0, done: false, silent: false, tgl_order: todayISO(), tgl_selesai: null, dikerjakan: true, order_count: cnt }).eq('id', id);
+    await catatPenjualan(id, o ? o.nama : '', todayISO(), '', Number(String(hs).replace(/[^0-9]/g, '')) || 0, 'baru');
+    showToast('✓ Order baru (' + cnt + '×) · masuk Perlu Dikerjakan'); loadNotangka(); }
   catch (e) { showToast('⚠ Gagal: ' + e.message); }
 }
 
@@ -1418,7 +1543,8 @@ async function silentNotangka(id) {
 }
 
 function naTodoCard(o) {
-  const sub = (o.wa ? o.wa + ' · ' : '') + (o.detail ? o.detail + ' · ' : '') + 'order ' + fmtDMY(o.tgl_order);
+  const _lj = naLastJual(o);
+  const sub = (o.wa ? o.wa + ' · ' : '') + (o.detail ? o.detail + ' · ' : '') + 'order ' + fmtDMY(o.tgl_order) + (_lj && Number(_lj.harga) ? ' · 💰 ' + fmtRp(_lj.harga) : ' · <span style="color:#b3402f">harga belum diisi</span>');
   return '<div class="inv-entity"><div style="min-width:0"><div class="inv-entity-title">' + o.nama + '</div><div class="inv-entity-sub">' + sub + '</div></div><div style="display:flex;gap:6px;align-items:center;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end"><button class="bayar-toggle" onclick="selesaiDikerjakan(' + o.id + ')">✓ Selesai</button><button class="btn-sm" onclick="editNotangka(' + o.id + ')">✏️</button><button class="btn-sm danger" onclick="hapusNotangka(' + o.id + ')">🗑</button></div></div>';
 }
 
@@ -1446,6 +1572,7 @@ async function saveNotangka() {
   const wa = document.getElementById('na-wa').value.trim();
   const detail = document.getElementById('na-detail').value.trim();
   const tgl = document.getElementById('na-tgl').value || todayISO();
+  const harga = Number((document.getElementById('na-harga') || {}).value) || 0;
   if (!nama) { showToast('⚠ Nama wajib diisi'); return; }
   if (naSaving) return; naSaving = true;
   const _btn = document.getElementById('na-save-btn'); if (_btn) _btn.disabled = true;
@@ -1466,17 +1593,22 @@ async function saveNotangka() {
       const _rec = naData.find(function (x) { return x.id === naEditId; });
       const _cnt = (((_rec && _rec.order_count) || 1) + 1);
       chk(await sb.from('notangka_order').update({ nama: nama, wa: wa, detail: detail, tgl_order: tgl, step: 0, done: false, silent: false, tgl_selesai: null, dikerjakan: true, order_count: _cnt }).eq('id', naEditId));
+      await catatPenjualan(naEditId, nama, tgl, detail, harga, 'baru');
       showToast('✓ Order baru (' + _cnt + '×) · masuk Perlu Dikerjakan');
     } else if (naEditId) {
       chk(await sb.from('notangka_order').update({ nama: nama, wa: wa, detail: detail, tgl_order: tgl }).eq('id', naEditId));
+      await catatPenjualan(naEditId, nama, tgl, detail, harga, 'edit');
       showToast('✓ Order diperbarui');
     } else {
-      chk(await sb.from('notangka_order').insert({ nama: nama, wa: wa, detail: detail, tgl_order: tgl, step: 0, done: false, dikerjakan: true }));
+      const _ins = chk(await sb.from('notangka_order').insert({ nama: nama, wa: wa, detail: detail, tgl_order: tgl, step: 0, done: false, dikerjakan: true }).select('id'));
+      const _nid = _ins.data && _ins.data[0] && _ins.data[0].id;
+      if (_nid) await catatPenjualan(_nid, nama, tgl, detail, harga, 'baru');
       showToast('✓ ' + nama + ' ditambahkan ke Perlu Dikerjakan');
     }
     naEditId = null; naReorder = false; naPickedName = null;
     document.getElementById('na-save-btn').textContent = 'Simpan Order';
     document.getElementById('na-nama').value = ''; document.getElementById('na-wa').value = ''; document.getElementById('na-detail').value = '';
+    { const h = document.getElementById('na-harga'); if (h) h.value = ''; }
     document.getElementById('na-form').classList.remove('open');
     loadNotangka();
   } catch (e) { showToast('⚠ Gagal: ' + e.message); }
@@ -1645,7 +1777,7 @@ async function ensureRoster(nama) {
 function refreshSelect() {
   const sel = document.getElementById('murid-select');
   const cur = sel.value;
-  const reg = [...students].sort((a,b) => a.nama.localeCompare(b.nama));
+  const reg = students.filter(s => !s.berhenti).sort((a,b) => a.nama.localeCompare(b.nama));
   const regSet = new Set(students.map(s => s.nama.trim().toLowerCase()));
   const belum = rosterNames.filter(n => !regSet.has(String(n).trim().toLowerCase())).sort((a,b) => a.localeCompare(b));
   let html = '<option value="">— Pilih murid —</option>';
@@ -1663,7 +1795,7 @@ function searchMurid() {
   if (!q) { box.innerHTML = ''; box.style.display = 'none'; return; }
   const regSet = new Set(students.map(s => s.nama.trim().toLowerCase()));
   let matches = [];
-  students.forEach(function (s) { if (s.nama.toLowerCase().indexOf(q) >= 0) matches.push({ nama: s.nama, id: s.id, reg: true }); });
+  students.forEach(function (s) { if (!s.berhenti && s.nama.toLowerCase().indexOf(q) >= 0) matches.push({ nama: s.nama, id: s.id, reg: true }); });
   rosterNames.forEach(function (n) { if (!regSet.has(String(n).trim().toLowerCase()) && String(n).toLowerCase().indexOf(q) >= 0) matches.push({ nama: n, reg: false }); });
   matches.sort(function (a, b) { return a.nama.localeCompare(b.nama); });
   if (!matches.length) { box.innerHTML = '<div class="mr-empty">Tidak ada murid cocok</div>'; box.style.display = 'block'; return; }
@@ -2136,6 +2268,14 @@ async function saveAbsensiHarian() {
     map[nm][inp.dataset.jenis] = Number(inp.value) || 0;
   });
   const items = Object.keys(map).map(k => map[k]);
+  try {
+    const ex = await sb.from('absensi_harian').select('nama').eq('tanggal', tgl).eq('jenis', 'hadir');
+    const sudah = {}; (ex.data || []).forEach(function (x) { sudah[String(x.nama).trim().toLowerCase()] = 1; });
+    const dobel = items.filter(function (it) { return (Number(it.hadir) || 0) > 0 && sudah[String(it.nama).trim().toLowerCase()]; }).map(function (it) { return it.nama; });
+    if (dobel.length && !confirm(dobel.join(', ') + ' sudah tercatat hadir di tanggal ini.\n\nOK = tetap tambahkan (jadi 2 les)\nBatal = lewati nama-nama itu')) {
+      items.forEach(function (it) { if (sudah[String(it.nama).trim().toLowerCase()]) it.hadir = 0; });
+    }
+  } catch (e) {}
   const btn = document.getElementById('btn-absensi-save');
   btn.disabled = true; btn.innerHTML = '<div class="spinner"></div> Menyimpan...';
   try {
@@ -2213,7 +2353,43 @@ async function loadBayarRingkasan() {
   el.innerHTML = '<div class="empty"><div class="spinner dark"></div></div>';
   try { bayarRingkasanData = await apiGet({ action: 'get_bayar_ringkasan' }) || []; }
   catch (e) { el.innerHTML = '<div class="empty">Gagal: ' + e.message + '</div>'; return; }
+  NA_BULAN = {};
+  try { const r = await sb.from('notangka_penjualan').select('tanggal,harga'); (r.data || []).forEach(function (j) { const k = String(j.tanggal).slice(0, 7); NA_BULAN[k] = (NA_BULAN[k] || 0) + (Number(j.harga) || 0); }); } catch (e) {}
   renderBayarRingkasan();
+  renderIncomeChart();
+}
+
+// ── Grafik pemasukan per bulan ──
+let CHART_YEAR = new Date().getFullYear(); let NA_BULAN = {};
+function chartYear(d) { CHART_YEAR += d; renderIncomeChart(); }
+function renderIncomeChart() {
+  const el = document.getElementById('income-chart'); if (!el) return;
+  const yl = document.getElementById('chart-year'); if (yl) yl.textContent = CHART_YEAR;
+  const by = {}; (bayarRingkasanData || []).forEach(function (r) { by[r.bulan] = r; });
+  const M = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+  const data = M.map(function (lbl, i) { const k = CHART_YEAR + '-' + String(i + 1).padStart(2, '0'); const r = by[k] || {}; return { lbl: lbl, k: k, tagih: Number(r.total) || 0, lunas: Number(r.total_lunas) || 0, na: NA_BULAN[k] || 0 }; });
+  const max = Math.max.apply(null, [1].concat(data.map(function (d) { return d.tagih + d.na; })));
+  const totT = data.reduce(function (a, d) { return a + d.tagih; }, 0), totL = data.reduce(function (a, d) { return a + d.lunas; }, 0), totN = data.reduce(function (a, d) { return a + d.na; }, 0);
+  const aktif = data.filter(function (d) { return d.tagih + d.na > 0; });
+  const rata = aktif.length ? Math.round((totL + totN) / aktif.length) : 0;
+  const best = aktif.slice().sort(function (a, b) { return (b.lunas + b.na) - (a.lunas + a.na); })[0];
+  const short = function (n) { return n >= 1e6 ? (Math.round(n / 1e5) / 10).toString().replace('.', ',') + 'jt' : (n >= 1e3 ? Math.round(n / 1e3) + 'rb' : String(n)); };
+  if (!totT && !totN) { el.innerHTML = '<div class="empty" style="padding:1rem;text-align:center;color:var(--muted);font-size:13px">Belum ada invoice di tahun ' + CHART_YEAR + '.</div>'; return; }
+  el.innerHTML = '<div class="ic-stats">'
+      + '<div class="bstat"><div class="bstat-num">' + fmtRp(totL + totN) + '</div><div class="bstat-lbl">Total masuk</div></div>'
+      + '<div class="bstat"><div class="bstat-num">' + fmtRp(totL) + '</div><div class="bstat-lbl">Les (lunas)</div></div>'
+      + '<div class="bstat"><div class="bstat-num">' + fmtRp(totN) + '</div><div class="bstat-lbl">Not angka</div></div>'
+      + '<div class="bstat"><div class="bstat-num">' + fmtRp(totT - totL) + '</div><div class="bstat-lbl">Les belum lunas</div></div>'
+      + '<div class="bstat"><div class="bstat-num">' + fmtRp(rata) + '</div><div class="bstat-lbl">Rata-rata masuk / bln</div></div></div>'
+    + '<div class="ic-chart">' + data.map(function (d) {
+      const ht = Math.round((d.tagih + d.na) / max * 100), hn = Math.round((d.lunas + d.na) / max * 100), hl = Math.round(d.lunas / max * 100);
+      return '<div class="ic-col" title="' + d.lbl + ' ' + CHART_YEAR + ' · les ditagih ' + fmtRp(d.tagih) + ' · les lunas ' + fmtRp(d.lunas) + ' · not angka ' + fmtRp(d.na) + '" onclick="bukaBulanBayar && bukaBulanBayar(\'' + d.k + '\')">'
+        + '<div class="ic-val">' + ((d.lunas + d.na) ? short(d.lunas + d.na) : '') + '</div>'
+        + '<div class="ic-bar"><div class="ic-t" style="height:' + ht + '%"></div><div class="ic-n" style="height:' + hn + '%"></div><div class="ic-l" style="height:' + hl + '%"></div></div>'
+        + '<div class="ic-lbl">' + d.lbl + '</div></div>';
+    }).join('') + '</div>'
+    + '<div class="ic-legend"><span><i style="background:#4a0d1a"></i>Les lunas</span><span><i style="background:#C9A24D"></i>Not angka</span><span><i style="background:#ecdcb4"></i>Les belum lunas</span>' + (best ? '<span style="margin-left:auto">🏆 Tertinggi: ' + best.lbl + ' (' + fmtRp(best.lunas) + ')</span>' : '') + '</div>'
+    + '<div style="font-size:11px;color:var(--muted);margin-top:6px">Les dihitung per bulan tagihan (bulan les), not angka per tanggal order. Angka di atas batang = total masuk. Tap batang untuk detail pembayaran les.</div>';
 }
 
 function renderBayarRingkasan() {
@@ -2660,9 +2836,10 @@ async function loadInvTarif() {
   catch (e) { el.innerHTML = '<div class="empty">Gagal: ' + e.message + '</div>'; return; }
   invTarif = {}; rows.forEach(function (r) { invTarif[r.nama] = r; });
   if (!rows.length) { el.innerHTML = '<div class="empty" style="padding:1.25rem;text-align:center;color:var(--muted);font-size:13px">Belum ada murid.</div>'; return; }
-  el.innerHTML = '<div style="font-size:11.5px;color:var(--muted);margin-bottom:10px">Isi tarif/sesi, schedule fee, transport, & grup (isi grup sama untuk invoice gabungan). Tersimpan otomatis.</div>' + rows.map(function (r) {
+  el.innerHTML = '<div style="font-size:11.5px;color:var(--muted);margin-bottom:10px">Isi tarif/sesi, schedule fee, transport, & grup (isi grup sama untuk invoice gabungan). Tersimpan otomatis.</div>'
+    + '<input type="text" id="tarif-search" placeholder="🔍 Cari nama murid / grup..." oninput="filterTarif()" autocomplete="off" style="width:100%;font-size:14px;padding:9px 12px;margin-bottom:10px"><div id="tarif-empty" style="display:none;text-align:center;color:var(--muted);font-size:13px;padding:10px"></div>' + rows.map(function (r) {
     const nm = String(r.nama).replace(/'/g, "\\'");
-    return '<div class="inv-tarif-card"><div class="nm">' + r.nama + '</div><div class="inv-tarif-fields">'
+    return '<div class="inv-tarif-card" data-q="' + (String(r.nama) + ' ' + String(r.grup || '')).toLowerCase().replace(/"/g, '') + '"><div class="nm">' + r.nama + (r.grup ? ' <span style="font-weight:400;font-size:11px;color:var(--muted)">👥 ' + r.grup + '</span>' : '') + '</div><div class="inv-tarif-fields">'
       + invTf(nm, 'tarif', 'Tarif / sesi', r.tarif)
       + invTf(nm, 'sf_rate', 'Schedule fee', r.sf_rate)
       + invTf(nm, 'transport', 'Transport', r.transport)
@@ -2672,6 +2849,12 @@ async function loadInvTarif() {
   }).join('');
 }
 
+function filterTarif() {
+  const q = ((document.getElementById('tarif-search') || {}).value || '').toLowerCase().trim();
+  let n = 0;
+  document.querySelectorAll('#inv-tarif .inv-tarif-card').forEach(function (c) { const ok = !q || (c.getAttribute('data-q') || '').indexOf(q) >= 0; c.style.display = ok ? '' : 'none'; if (ok) n++; });
+  const em = document.getElementById('tarif-empty'); if (em) { em.style.display = n ? 'none' : ''; em.textContent = 'Tidak ada yang cocok "' + q + '"'; }
+}
 function invTf(nm, field, label, val) { return '<div class="inv-tf"><label>' + label + '</label><input type="number" min="0" value="' + (val || 0) + '" onchange="saveTarif(\'' + nm + '\',\'' + field + '\',this.value)"></div>'; }
 function invTfg(nm, field, label, val) { return '<div class="inv-tf"><label>' + label + '</label><input type="text" value="' + String(val || '').replace(/"/g, '&quot;') + '" onchange="saveTarif(\'' + nm + '\',\'' + field + '\',this.value)"></div>'; }
 
@@ -2913,7 +3096,7 @@ async function loadLapToday() {
   const list = Object.keys(names).map(function (k) {
     const m = students.find(function (s) { return String(s.nama).trim().toLowerCase() === k; });
     return Object.assign({}, names[k], { id: m ? m.id : null, sudah: m ? !!done[m.id] : false });
-  }).filter(function (x) { return x.id; })
+  }).filter(function (x) { return x.id && !(students.find(function (s) { return s.id === x.id; }) || {}).berhenti; })
     .sort(function (a, b) { return (a.sudah - b.sudah) || ((b.hadir ? 1 : 0) - (a.hadir ? 1 : 0)) || (b.cnt - a.cnt) || a.nama.localeCompare(b.nama); });
   if (!list.length) { el.innerHTML = ''; return; }
   const belum = list.filter(function (x) { return !x.sudah; }).length;
@@ -2922,8 +3105,22 @@ async function loadLapToday() {
     + '<div class="lt-chips">' + list.map(function (x) {
       const cls = x.sudah ? 'lt-chip done' : (x.hadir ? 'lt-chip hadir' : 'lt-chip');
       const info = x.sudah ? '✓' : (x.hadir ? 'hadir' : (x.cnt + '/4'));
-      return '<button type="button" class="' + cls + '" onclick="pickMurid(\'' + x.id + '\')">' + x.nama + ' <small>' + info + '</small></button>';
+      const nm = String(x.nama).replace(/'/g, "\\'");
+      return '<span class="lt-wrap"><button type="button" class="' + cls + '" onclick="pickMurid(\'' + x.id + '\')">' + x.nama + ' <small>' + info + '</small></button>'
+        + (x.hadir ? '' : '<button type="button" class="lt-hadir" title="Tandai hadir di absensi" onclick="tandaiHadir(\'' + nm + '\')">✓ Hadir</button>') + '</span>';
     }).join('') + '</div><div class="lt-note">Dari absensi hari ini + ' + hari + ' 4 minggu terakhir · tap nama untuk isi laporan</div></div>';
+}
+
+async function tandaiHadir(nama) {
+  const tgl = getTglInput();
+  try {
+    const ex = await sb.from('absensi_harian').select('id').eq('tanggal', tgl).ilike('nama', nama).eq('jenis', 'hadir').limit(1);
+    if (ex.data && ex.data.length) { showToast('ℹ️ ' + nama + ' sudah tercatat hadir'); loadLapToday(); return; }
+    const r = await sb.from('absensi_harian').insert({ tanggal: tgl, nama: nama, jenis: 'hadir', jumlah: 1, waktu: new Date().toISOString() });
+    if (r.error) throw new Error(r.error.message);
+    showToast('✓ ' + nama + ' tercatat hadir · ' + fmtDMY(tgl));
+    loadLapToday();
+  } catch (e) { showToast('⚠ Gagal: ' + e.message); }
 }
 
 // ── Submit laporan ────────────────────────────────────
@@ -3117,7 +3314,8 @@ function initials(nama) { return nama.split(' ').slice(0,2).map(w => w[0]).join(
 
 function renderStudentList() {
   { const f = document.getElementById('edit-form'), ov = document.getElementById('edit-overlay'); if (f && ov && f.parentElement !== ov) closeEdit(); }
-  let sorted = [...students].sort((a,b) => a.nama.localeCompare(b.nama));
+  let sorted = students.filter(s => !s.berhenti).sort((a,b) => a.nama.localeCompare(b.nama));
+  const stopped = students.filter(s => s.berhenti).sort((a,b) => String(b.berhenti).localeCompare(String(a.berhenti)));
   const _si = document.getElementById('murid-search-list');
   const q = (_si ? _si.value : '').toLowerCase().trim();
   if (q) sorted = sorted.filter(s => s.nama.toLowerCase().indexOf(q) >= 0 || (s.ortu || '').toLowerCase().indexOf(q) >= 0);
@@ -3138,10 +3336,27 @@ function renderStudentList() {
       </div>
       <div class="student-card-actions">
         <button class="btn-sm" onclick="openEdit('${s.id}')">Edit</button>
+        <button class="btn-sm" onclick="setBerhenti('${s.id}', true)" title="Murid berhenti les (data & history tetap tersimpan)">⏸ Berhenti</button>
         <button class="btn-sm danger" onclick="deleteStudent('${s.id}')">Hapus</button>
       </div>
     </div>
-  `).join('');
+  `).join('') + (stopped.length ? `<details class="stopped-box"${q ? ' open' : ''}><summary>⏸ Murid berhenti (${stopped.length})</summary>` + stopped.filter(s => !q || s.nama.toLowerCase().indexOf(q) >= 0).map(s => `
+    <div class="student-card stopped">
+      <div class="avatar">${initials(s.nama)}</div>
+      <div class="student-card-info"><div class="student-card-name">${s.nama}</div><div class="student-card-meta">Berhenti sejak ${fmtDMY(String(s.berhenti).slice(0,10))}${s.ortu ? ' &nbsp;·&nbsp; ' + s.ortu : ''} &nbsp;·&nbsp; link ortu ditutup</div></div>
+      <div class="student-card-actions"><button class="btn-sm" onclick="setBerhenti('${s.id}', false)">▶ Aktifkan lagi</button></div>
+    </div>`).join('') + '</details>' : '');
+}
+
+async function setBerhenti(id, stop) {
+  const s = students.find(x => x.id === id); if (!s) return;
+  if (stop && !confirm(s.nama + ' berhenti les?\n\n• Tidak muncul lagi di laporan, absensi & rekomendasi\n• Link ortu ditutup\n• Laporan, absensi, invoice & history penghasilan TETAP tersimpan\n\nBisa diaktifkan lagi kapan saja.')) return;
+  const val = stop ? todayISO() : null;
+  const r = await sb.from('murid').update({ berhenti: val }).eq('id', id);
+  if (r.error) { showToast('⚠ Gagal: ' + r.error.message); return; }
+  s.berhenti = val;
+  renderStudentList(); refreshSelect(); try { loadRosterNames(); } catch (e) {}
+  showToast(stop ? '⏸ ' + s.nama + ' ditandai berhenti' : '▶ ' + s.nama + ' aktif lagi');
 }
 
 // Init
