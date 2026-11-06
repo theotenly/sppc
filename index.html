@@ -673,16 +673,6 @@
       <input type="text" id="bayar-ringkasan-search" placeholder="🔍 Cari bulan (mis. 2026-09 / September)..." oninput="renderBayarRingkasan()" style="width:100%;margin-bottom:12px">
       <div id="bayar-ringkasan"></div>
     </div>
-    <div class="section">
-      <div class="section-header">
-        <div class="section-header-left">
-          <div class="section-icon">📈</div>
-          <div class="section-title">Pemasukan per Bulan</div>
-        </div>
-        <div class="lap-month-nav" style="margin:0"><button onclick="chartYear(-1)">‹</button><strong id="chart-year"></strong><button onclick="chartYear(1)">›</button></div>
-      </div>
-      <div id="income-chart"></div>
-    </div>
   </div>
 
   <!-- PAGE: REKAP -->
@@ -783,6 +773,25 @@
     </div>
   </div>
 
+  <!-- PAGE: PEMASUKAN -->
+  <div class="page" id="page-pemasukan">
+    <div class="section">
+      <div class="section-header">
+        <div class="section-header-left">
+          <div class="section-icon">📈</div>
+          <div class="section-title">Pemasukan per Bulan</div>
+        </div>
+        <div class="lap-month-nav" style="margin:0"><button onclick="chartYear(-1)">‹</button><strong id="chart-year"></strong><button onclick="chartYear(1)">›</button></div>
+      </div>
+      <div id="income-chart"></div>
+    </div>
+    <div class="section">
+      <div class="section-header"><div class="section-header-left"><div class="section-icon">📅</div><div class="section-title">Rincian per Bulan</div></div></div>
+      <div id="pm-table"></div>
+    </div>
+    <div style="text-align:center;margin:6px 0 10px"><button class="btn-sm" onclick="showPage('setting')">⚙️ Setting penagihan & backup</button></div>
+  </div>
+
   <!-- PAGE: SETTING -->
   <div class="page" id="page-setting">
     <div class="section">
@@ -841,12 +850,6 @@
 
   <!-- PAGE: PENDAPATAN & JASA -->
   <div class="page" id="page-pendapatan">
-    <div class="section">
-      <div class="section-header"><div class="section-header-left"><div class="section-icon">📊</div><div class="section-title">Ringkasan per Bulan</div></div>
-        <div class="lap-month-nav" style="margin:0"><button onclick="pdYear(-1)">‹</button><strong id="pd-year"></strong><button onclick="pdYear(1)">›</button></div></div>
-      <div id="pd-stats" class="ic-stats"></div>
-      <div id="pd-ringkasan"></div>
-    </div>
     <div class="section">
       <div class="section-header"><div class="section-header-left"><div class="section-icon">➕</div><div class="section-title">Catat Pemasukan</div></div></div>
       <div style="font-size:12px;color:var(--muted);margin-bottom:10px">Order not angka baru cukup isi harga di form order. Di sini untuk <b>total bulan lalu</b> atau <b>jasa lain</b> (pelayanan, website, dll).</div>
@@ -1265,7 +1268,7 @@ function showToast(msg) {
 // ── Tabs ──────────────────────────────────────────────
 const NAV_GROUPS = {
   isi:   { label: '📝 Isi Data', pages: [['laporan','📋 Laporan'],['absensi','🗓️ Absensi']] },
-  uang:  { label: '💰 Keuangan', pages: [['invoice','🧾 Invoice'],['bayar','💰 Bayar'],['rekap','📊 Rekap'],['setting','⚙️ Setting']] },
+  uang:  { label: '💰 Keuangan', pages: [['invoice','🧾 Invoice'],['bayar','💰 Bayar'],['rekap','📊 Rekap'],['pemasukan','📈 Pemasukan'],['setting','⚙️ Setting', true]] },
   murid: { label: '👥 Murid', pages: [['murid','👥 Data Murid']] },
   notangka: { label: '🎼 Not Angka', pages: [['notangka','🎼 Order & Follow-up'],['pendapatan','💰 Pendapatan & Jasa']] }
 };
@@ -1277,7 +1280,7 @@ function buildSubtabs(group, active) {
   const sub = document.getElementById('subtab-bar');
   const grp = NAV_GROUPS[group];
   if (grp && grp.pages.length > 1) {
-    sub.innerHTML = grp.pages.map(function (pr) { return '<button class="subtab-btn' + (pr[0] === active ? ' active' : '') + '" data-page="' + pr[0] + '" onclick="showPage(\'' + pr[0] + '\')">' + pr[1] + '</button>'; }).join('');
+    sub.innerHTML = grp.pages.filter(function (pr) { return pr[2] !== true || pr[0] === active; }).map(function (pr) { return '<button class="subtab-btn' + (pr[0] === active ? ' active' : '') + '" data-page="' + pr[0] + '" onclick="showPage(\'' + pr[0] + '\')">' + pr[1] + '</button>'; }).join('');
   } else { sub.innerHTML = ''; }
 }
 
@@ -1465,7 +1468,7 @@ let PD_YEAR = new Date().getFullYear(), PD_FILTER = 'all', PD_PAGE = 1, PD_EDIT 
 function pdYear(d) { PD_YEAR += d; renderPendapatan(); }
 function pdKat(j) { return j.kategori || 'notangka'; }
 async function loadPendapatan() {
-  const el = document.getElementById('pd-ringkasan'); if (el) el.innerHTML = '<div class="empty"><div class="spinner dark"></div></div>';
+  const el = document.getElementById('pd-history'); if (el) el.innerHTML = '<div class="empty"><div class="spinner dark"></div></div>';
   try { naJual = (await sb.from('notangka_penjualan').select('*').order('tanggal')).data || []; } catch (e) { naJual = []; }
   if (!naData || !naData.length) { try { naData = (await sb.from('notangka_order').select('*')).data || []; } catch (e) {} }
   const b = document.getElementById('pd-bulan'); if (b && !b.value) { const d = new Date(); d.setMonth(d.getMonth() - 1); b.value = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); }
@@ -1477,7 +1480,8 @@ function pdJenisChange() {
   document.getElementById('pd-bulan-wrap').style.display = rk ? '' : 'none';
   ['pd-tgl-wrap', 'pd-nama-wrap', 'pd-ket-wrap'].forEach(function (id) { document.getElementById(id).style.display = rk ? 'none' : ''; });
 }
-function renderPendapatan() {
+function renderPendapatan() { renderPdHistory(); }
+function _unusedRingkasanPd() {
   const yl = document.getElementById('pd-year'); if (yl) yl.textContent = PD_YEAR;
   const M = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
   const rows = M.map(function (lbl, i) { return { k: PD_YEAR + '-' + String(i + 1).padStart(2, '0'), lbl: lbl, na: 0, nOrder: 0, lain: {} }; });
@@ -1851,6 +1855,7 @@ function showPage(name) {
   if (name === 'rekap') loadRekap();
   if (name === 'invoice') loadInvoice();
   if (name === 'setting') loadSetting();
+  if (name === 'pemasukan') loadPemasukan();
   if (name === 'notangka') loadNotangka();
   if (name === 'pendapatan') loadPendapatan();
 }
@@ -2495,7 +2500,31 @@ async function loadBayarRingkasan() {
   NA_BULAN = {}; LAIN_BULAN = {};
   try { const r = await sb.from('notangka_penjualan').select('tanggal,harga,kategori'); (r.data || []).forEach(function (j) { const k = String(j.tanggal).slice(0, 7); const tgt = (j.kategori && j.kategori !== 'notangka') ? LAIN_BULAN : NA_BULAN; tgt[k] = (tgt[k] || 0) + (Number(j.harga) || 0); }); } catch (e) {}
   renderBayarRingkasan();
+}
+
+// ── Halaman Pemasukan (keseluruhan) ──
+async function loadPemasukan() {
+  const el = document.getElementById('income-chart'); if (el) el.innerHTML = '<div class="empty"><div class="spinner dark"></div></div>';
+  try { bayarRingkasanData = await apiGet({ action: 'get_bayar_ringkasan' }) || []; } catch (e) { bayarRingkasanData = []; }
+  NA_BULAN = {}; LAIN_BULAN = {};
+  try { const r = await sb.from('notangka_penjualan').select('tanggal,harga,kategori'); (r.data || []).forEach(function (j) { const k = String(j.tanggal).slice(0, 7); const tgt = (j.kategori && j.kategori !== 'notangka') ? LAIN_BULAN : NA_BULAN; tgt[k] = (tgt[k] || 0) + (Number(j.harga) || 0); }); } catch (e) {}
   renderIncomeChart();
+}
+function renderPmTable() {
+  const el = document.getElementById('pm-table'); if (!el) return;
+  const by = {}; (bayarRingkasanData || []).forEach(function (r) { by[r.bulan] = r; });
+  const keys = {}; Object.keys(by).concat(Object.keys(NA_BULAN), Object.keys(LAIN_BULAN)).forEach(function (k) { if (String(k).slice(0, 4) === String(CHART_YEAR)) keys[k] = 1; });
+  const ks = Object.keys(keys).sort().reverse();
+  if (!ks.length) { el.innerHTML = '<div class="empty" style="padding:.75rem;text-align:center;color:var(--muted);font-size:13px">Belum ada data di ' + CHART_YEAR + '.</div>'; return; }
+  let T = { t: 0, l: 0, n: 0, j: 0 };
+  const rows = ks.map(function (k) {
+    const r = by[k] || {}, t = Number(r.total) || 0, l = Number(r.total_lunas) || 0, n = NA_BULAN[k] || 0, j = LAIN_BULAN[k] || 0;
+    T.t += t; T.l += l; T.n += n; T.j += j;
+    return '<tr><td>' + labelBulan(k) + '</td><td class="num">' + (l ? fmtRp(l) : '—') + (t > l ? '<br><small style="color:#b3402f">belum ' + fmtRp(t - l) + '</small>' : '') + '</td><td class="num">' + (n ? fmtRp(n) : '—') + '</td><td class="num">' + (j ? fmtRp(j) : '—') + '</td><td class="num"><b>' + fmtRp(l + n + j) + '</b></td></tr>';
+  }).join('');
+  el.innerHTML = '<div style="overflow-x:auto"><table class="na-rk-table"><thead><tr><th>Bulan</th><th class="num">Les</th><th class="num">Not angka</th><th class="num">Jasa lain</th><th class="num">Total masuk</th></tr></thead><tbody>' + rows
+    + '<tr style="background:#faf6ee"><td><b>Total ' + CHART_YEAR + '</b></td><td class="num"><b>' + fmtRp(T.l) + '</b></td><td class="num"><b>' + fmtRp(T.n) + '</b></td><td class="num"><b>' + fmtRp(T.j) + '</b></td><td class="num"><b>' + fmtRp(T.l + T.n + T.j) + '</b></td></tr></tbody></table></div>'
+    + '<div style="font-size:11px;color:var(--muted);margin-top:6px">Les = invoice yang sudah lunas (per bulan les). Not angka & jasa = sesuai tanggal pemasukan.</div>';
 }
 
 // ── Grafik pemasukan per bulan ──
@@ -2503,6 +2532,7 @@ let CHART_YEAR = new Date().getFullYear(); let NA_BULAN = {}, LAIN_BULAN = {};
 function chartYear(d) { CHART_YEAR += d; renderIncomeChart(); }
 function renderIncomeChart() {
   const el = document.getElementById('income-chart'); if (!el) return;
+  try { renderPmTable(); } catch (e) {}
   const yl = document.getElementById('chart-year'); if (yl) yl.textContent = CHART_YEAR;
   const by = {}; (bayarRingkasanData || []).forEach(function (r) { by[r.bulan] = r; });
   const M = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
@@ -2523,7 +2553,7 @@ function renderIncomeChart() {
       + '<div class="bstat"><div class="bstat-num">' + fmtRp(rata) + '</div><div class="bstat-lbl">Rata-rata masuk / bln</div></div></div>'
     + '<div class="ic-chart">' + data.map(function (d) {
       const ht = Math.round((d.tagih + d.na) / max * 100), hn = Math.round((d.lunas + d.na) / max * 100), hl = Math.round(d.lunas / max * 100);
-      return '<div class="ic-col" title="' + d.lbl + ' ' + CHART_YEAR + ' · les ditagih ' + fmtRp(d.tagih) + ' · les lunas ' + fmtRp(d.lunas) + ' · not angka ' + fmtRp(d.na) + '" onclick="bukaBulanBayar && bukaBulanBayar(\'' + d.k + '\')">'
+      return '<div class="ic-col" title="' + d.lbl + ' ' + CHART_YEAR + ' · les ditagih ' + fmtRp(d.tagih) + ' · les lunas ' + fmtRp(d.lunas) + ' · not angka ' + fmtRp(d.na) + '" onclick="showPage(\'bayar\');setTimeout(function(){bukaBulanBayar(\'' + d.k + '\')},300)">'
         + '<div class="ic-val">' + ((d.lunas + d.na) ? short(d.lunas + d.na) : '') + '</div>'
         + '<div class="ic-bar"><div class="ic-t" style="height:' + ht + '%"></div><div class="ic-j" style="height:' + hn + '%"></div><div class="ic-n" style="height:' + Math.round((d.lunas + d.naOnly) / max * 100) + '%"></div><div class="ic-l" style="height:' + hl + '%"></div></div>'
         + '<div class="ic-lbl">' + d.lbl + '</div></div>';
