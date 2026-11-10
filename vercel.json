@@ -1,5 +1,12 @@
 {
   "rewrites": [
-    { "source": "/murid/:path*", "destination": "/ortu.html" }
+    {
+      "source": "/murid/:path*",
+      "destination": "/ortu.html"
+    },
+    {
+      "source": "/:page(laporan|absensi|invoice|bayar|rekap|pemasukan|setting|data-murid|notangka|pendapatan)",
+      "destination": "/index.html"
+    }
   ]
 }

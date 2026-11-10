@@ -502,6 +502,8 @@
   .pd-act{display:flex;gap:4px}
   .pd-fun .inv-ftab{border-radius:999px}
   @media (max-width:480px){ .pcal-c{min-height:46px;border-radius:10px} .pcal-v{font-size:10px} .pc-n{font-size:13.5px} .pd-act{margin-left:auto} }
+  .share-page-btn{position:absolute;right:14px;top:50%;transform:translateY(-50%);width:38px;height:38px;border-radius:50%;border:1px solid rgba(201,162,77,.45);background:rgba(255,255,255,.08);color:#fff;font-size:17px;cursor:pointer;z-index:5}
+  .share-page-btn:hover{background:rgba(201,162,77,.25)}
 </style>
 </head>
 <body>
@@ -526,6 +528,7 @@
       <p>Kelola murid & kirim laporan progress</p>
     </div>
   </div>
+  <button class="share-page-btn" onclick="event.stopPropagation();salinLinkHalaman()" title="Salin link halaman ini">🔗</button>
 </header>
 
 <div id="home-screen">
@@ -1922,9 +1925,34 @@ async function backupData() {
   } catch (e) { showToast('⚠ Gagal backup: ' + e.message); }
 }
 
-function goHome() {
+function goHome(noPush) {
   document.body.classList.add('home-active');
   document.querySelectorAll('.page').forEach(function (p) { p.classList.remove('active'); });
+  curPageName = null;
+  if (!noPush && location.pathname !== '/') { try { history.pushState({}, '', '/'); } catch (e) {} }
+  document.title = 'SPPC — Dashboard Guru';
+}
+
+// ── Link per halaman (bisa di-share): /laporan, /absensi, /invoice, ... ──
+const PAGE_SLUG = { laporan: 'laporan', absensi: 'absensi', invoice: 'invoice', bayar: 'bayar', rekap: 'rekap', pemasukan: 'pemasukan', setting: 'setting', murid: 'data-murid', notangka: 'notangka', pendapatan: 'pendapatan' };
+const PAGE_TITLE = { laporan: 'Laporan', absensi: 'Absensi', invoice: 'Invoice', bayar: 'Bayar', rekap: 'Rekap', pemasukan: 'Pemasukan', setting: 'Setting', murid: 'Data Murid', notangka: 'Not Angka', pendapatan: 'Pendapatan & Jasa' };
+const SLUG_PAGE = {}; Object.keys(PAGE_SLUG).forEach(function (k) { SLUG_PAGE[PAGE_SLUG[k]] = k; });
+let _routing = false;
+function routeFromPath() {
+  const slug = location.pathname.replace(/^\/+|\/+$/g, '').toLowerCase();
+  const page = SLUG_PAGE[slug];
+  _routing = true;
+  try {
+    if (page) { document.body.classList.remove('home-active'); showPage(page); }
+    else goHome(true);
+  } finally { _routing = false; }
+}
+window.addEventListener('popstate', routeFromPath);
+function salinLinkHalaman() {
+  const url = location.origin + location.pathname;
+  const done = function () { showToast('🔗 Link halaman disalin'); };
+  if (navigator.share && /Android|iPhone|iPad/i.test(navigator.userAgent)) { navigator.share({ title: document.title, url: url }).catch(function () {}); return; }
+  if (navigator.clipboard) navigator.clipboard.writeText(url).then(done, function () { fallbackCopy(url); done(); }); else { fallbackCopy(url); done(); }
 }
 
 function enterGroup(group) {
@@ -1942,6 +1970,8 @@ const PAGE_ORDER = []; Object.keys(NAV_GROUPS).forEach(function (g) { NAV_GROUPS
 let curPageName = null;
 function showPage(name) {
   const group = PAGE_GROUP[name] || 'isi';
+  document.body.classList.remove('home-active');
+  { const sl = '/' + (PAGE_SLUG[name] || name); if (!_routing && location.pathname !== sl) { try { history.pushState({ p: name }, '', sl); } catch (e) {} } document.title = (PAGE_TITLE[name] || name) + ' — SPPC'; }
   lastPageOfGroup[group] = name;
   const prevName = curPageName; curPageName = name;
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active', 'slide-l', 'slide-r'));
@@ -3643,7 +3673,7 @@ updatePreview();
 _initGate();
 loadConfig();
 loadDurasi();
-goHome();
+routeFromPath();
 // ── Backup otomatis: sekali per bulan saat dashboard dibuka ──
 function autoBackupBulanan() {
   try {
