@@ -3504,7 +3504,25 @@ async function simpanQuickIncome() {
   if (!p) { showToast('⚠ Tulis nominalnya, cth. 50000 Rani'); return; }
   _qiSaving = true;
   try {
-    const row = { order_id: null, nama: p.nama || '—', tanggal: document.getElementById('qi-tgl').value || todayISO(), detail: p.detail, harga: p.jumlah, kategori: QI_KAT };
+    const tgl = document.getElementById('qi-tgl').value || todayISO();
+    // kalau ada order not angka yang sedang dikerjakan atas nama ini → tawarkan langsung selesaikan order itu
+    if (QI_KAT === 'notangka' && p.nama) {
+      let orders = naData;
+      if (!orders || !orders.length) { try { orders = (await sb.from('notangka_order').select('*')).data || []; } catch (e) { orders = []; } }
+      const nm = p.nama.toLowerCase();
+      const o = orders.find(function (x) { return x.dikerjakan && !x.done && String(x.nama || '').trim().toLowerCase().indexOf(nm) === 0; });
+      if (o && confirm('"' + o.nama + '" punya order yang sedang dikerjakan' + (o.detail ? ' (' + o.detail + ')' : '') + '.\n\nOK = tandai order itu SELESAI dengan harga ' + fmtRp(p.jumlah) + '\nBatal = catat sebagai pemasukan terpisah')) {
+        const r1 = await sb.from('notangka_order').update({ dikerjakan: false, tgl_selesai: tgl, step: 0 }).eq('id', o.id); if (r1.error) throw new Error(r1.error.message);
+        const ex = await sb.from('notangka_penjualan').select('id').eq('order_id', o.id).gte('tanggal', String(o.tgl_order)).order('id', { ascending: false }).limit(1);
+        const r2 = (ex.data && ex.data[0]) ? await sb.from('notangka_penjualan').update({ harga: p.jumlah, tanggal: tgl }).eq('id', ex.data[0].id)
+          : await sb.from('notangka_penjualan').insert({ order_id: o.id, nama: o.nama, tanggal: tgl, detail: p.detail || o.detail || '', harga: p.jumlah, kategori: 'notangka' });
+        if (r2.error) throw new Error(r2.error.message);
+        showToast('✓ Order ' + o.nama + ' selesai · ' + fmtRp(p.jumlah) + ' · follow-up dimulai');
+        document.getElementById('qi-text').value = ''; qiPreview(); renderQiRecent(); qiRefresh();
+        return;
+      }
+    }
+    const row = { order_id: null, nama: p.nama || '—', tanggal: tgl, detail: p.detail, harga: p.jumlah, kategori: QI_KAT };
     const r = await sb.from('notangka_penjualan').insert(row);
     if (r.error) throw new Error(r.error.message);
     showToast('✓ ' + fmtRp(p.jumlah) + (p.nama ? ' · ' + p.nama : '') + ' tercatat');
