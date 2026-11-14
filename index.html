@@ -3478,7 +3478,16 @@ function tutupQuickIncome() { document.getElementById('qi-sheet').classList.remo
 function renderQiKat() {
   document.getElementById('qi-kat').innerHTML = QI_KATS.map(function (k) { return '<button type="button" class="' + (QI_KAT === k[0] ? 'on' : '') + '" onclick="QI_KAT=\'' + k[0] + '\';renderQiKat()">' + k[1] + '</button>'; }).join('');
 }
+// "order Rani lagu Bunga [50000]" → pesanan baru masuk Perlu dikerjakan
+function qiOrderParse(txt) {
+  const m = String(txt || '').trim().match(/^(order|pesan|pesanan)\s+(.+)$/i); if (!m) return null;
+  let rest = m[2], harga = 0;
+  const pm = qiParse(rest); if (pm) { harga = pm.jumlah; rest = (pm.nama + ' ' + pm.detail).trim(); }
+  const w = rest.split(/\s+/); return { nama: w[0] || '', detail: w.slice(1).join(' '), harga: harga };
+}
 function qiPreview() {
+  const o = qiOrderParse(document.getElementById('qi-text').value);
+  if (o) { document.getElementById('qi-prev').innerHTML = '🛠 <b>Order baru</b> → Perlu dikerjakan · ' + (o.nama ? lapEsc(o.nama) : '<span style="color:#b3402f">nama?</span>') + (o.detail ? ' · ' + lapEsc(o.detail) : '') + (o.harga ? ' · ' + fmtRp(o.harga) : ''); return; }
   const p = qiParse(document.getElementById('qi-text').value), el = document.getElementById('qi-prev');
   el.innerHTML = p ? ('<b>' + fmtRp(p.jumlah) + '</b>' + (p.nama ? ' · ' + lapEsc(p.nama) : ' · <span style="color:#b3402f">tanpa nama</span>') + (p.detail ? ' · ' + lapEsc(p.detail) : '')) : '';
 }
@@ -3498,8 +3507,32 @@ async function hapusQi(id) {
 }
 function qiRefresh() { try { if (curPageName === 'pendapatan') loadPendapatan(); if (curPageName === 'pemasukan') loadPemasukan(); if (curPageName === 'notangka') loadNotangka(); } catch (e) {} }
 let _qiSaving = false;
+async function simpanQuickOrder(o) {
+  if (!o.nama) { showToast('⚠ Tulis nama customer, cth. order Rani lagu Bunga'); return; }
+  _qiSaving = true;
+  try {
+    const tgl = document.getElementById('qi-tgl').value || todayISO();
+    let orders = naData; if (!orders || !orders.length) { try { orders = (await sb.from('notangka_order').select('*')).data || []; } catch (e) { orders = []; } }
+    const ex = orders.filter(function (x) { return String(x.nama || '').trim().toLowerCase() === o.nama.toLowerCase(); });
+    let id = null, msg;
+    if (ex.length === 1 && !ex[0].dikerjakan && confirm(ex[0].nama + ' sudah pernah order (' + (ex[0].wa || 'tanpa WA') + ').\n\nOK = catat sebagai ORDER LAGI customer ini\nBatal = buat customer baru')) {
+      const c = ex[0], cnt = (c.order_count || 1) + 1;
+      const r = await sb.from('notangka_order').update({ step: 0, done: false, silent: false, tgl_order: tgl, tgl_selesai: null, dikerjakan: true, order_count: cnt, detail: o.detail || c.detail || '' }).eq('id', c.id);
+      if (r.error) throw new Error(r.error.message); id = c.id; msg = '✓ Order lagi ' + c.nama + ' (' + cnt + '×) · masuk Perlu dikerjakan';
+    } else {
+      const r = await sb.from('notangka_order').insert({ nama: o.nama, wa: '', detail: o.detail, tgl_order: tgl, step: 0, done: false, dikerjakan: true }).select('id');
+      if (r.error) throw new Error(r.error.message); id = r.data && r.data[0] && r.data[0].id; msg = '✓ Order ' + o.nama + ' masuk Perlu dikerjakan';
+    }
+    if (id && o.harga) { const r2 = await sb.from('notangka_penjualan').insert({ order_id: id, nama: o.nama, tanggal: tgl, detail: o.detail, harga: o.harga, kategori: 'notangka' }); if (r2.error) throw new Error(r2.error.message); }
+    showToast(msg);
+    document.getElementById('qi-text').value = ''; qiPreview(); renderQiRecent(); try { naData = []; } catch (e) {} qiRefresh();
+  } catch (e) { showToast('⚠ Gagal: ' + e.message); }
+  finally { _qiSaving = false; }
+}
 async function simpanQuickIncome() {
   if (_qiSaving) return;
+  const ord = qiOrderParse(document.getElementById('qi-text').value);
+  if (ord) { await simpanQuickOrder(ord); return; }
   const p = qiParse(document.getElementById('qi-text').value);
   if (!p) { showToast('⚠ Tulis nominalnya, cth. 50000 Rani'); return; }
   _qiSaving = true;
@@ -3865,7 +3898,7 @@ document.querySelectorAll('.date-hidden').forEach(function (inp) { inp.addEventL
     <div class="qi-kat" id="qi-kat"></div>
     <div class="qi-row"><label>📅</label><input id="qi-tgl" type="date"><button class="qi-save" onclick="simpanQuickIncome()">Simpan</button></div>
     <div id="qi-prev" class="qi-prev"></div>
-    <div class="qi-tip">Format: <b>nominal nama keterangan</b> · bisa <b>50rb</b>, <b>50k</b>, <b>1,5jt</b>, <b>50.000</b> · Enter untuk simpan</div>
+    <div class="qi-tip">💰 Pemasukan: <b>50000 Rani lagu Bunga</b> (bisa 50rb / 1,5jt)<br>🛠 Pesanan baru: <b>order Rani lagu Bunga</b> (harga opsional) · Enter untuk simpan</div>
     <div id="qi-recent"></div>
   </div>
 </div>
