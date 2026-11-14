@@ -527,6 +527,22 @@
   .qi-ri span{flex:1;min-width:0}.qi-ri small{color:var(--muted)}
   .qi-ri button{border:none;background:none;cursor:pointer}
   @media (min-width:641px){ #qi-fab{bottom:100px;right:24px} .qi-box{border-radius:22px;margin-bottom:24px} #qi-sheet{align-items:center} }
+  .qi-lbl{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:10px 0 5px}
+  .qi-box input[type=text],.qi-box input[type=tel]{width:100%;font-size:16px!important;padding:10px 12px;border:1px solid var(--border);border-radius:12px;font-family:inherit}
+  #qi-cust{border:2px solid #ffd27a!important}
+  .qi-cust-list{display:none;position:absolute;left:0;right:0;top:100%;background:#fff;border:1px solid var(--border);border-radius:12px;box-shadow:0 8px 20px rgba(0,0,0,.12);z-index:5;max-height:240px;overflow:auto;margin-top:4px}
+  .qi-chip-sel{display:flex;align-items:center;gap:8px;background:#fff3cf;border:1px solid #f0d58a;border-radius:12px;padding:9px 12px;font-weight:700}
+  .qi-chip-sel small{font-weight:500;color:var(--muted)}
+  .qi-chip-sel button{margin-left:auto;border:none;background:#fff;border-radius:50%;width:26px;height:26px;cursor:pointer}
+  .qi-open{font-size:12.5px;color:#7a4b00;margin-top:6px}
+  #qi-wa-wrap{margin-top:8px}
+  .qi-seg{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .qi-seg button{border:2px solid var(--border);background:#fff;border-radius:14px;padding:11px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit}
+  .qi-seg button.on:first-child{background:#fff3cf;border-color:#f0b84a;color:#7a4b00}
+  .qi-seg button.on:last-child{background:#e3f4ec;border-color:#3f7d6a;color:#1f5a47}
+  .qi-grid{display:grid;grid-template-columns:1.3fr 1fr;gap:8px}
+  .qi-box{max-height:92vh;overflow:auto}
+  .qi-row{margin-top:12px}
 </style>
 </head>
 <body>
@@ -3454,42 +3470,80 @@ async function tandaiHadir(nama) {
 }
 
 
-// ── + Pemasukan cepat ──
-let QI_KAT = 'notangka';
+// ── + Pesanan / Pemasukan cepat (pakai tombol) ──
+let QI_KAT = 'notangka', QI_STATUS = 'dikerjakan', QI_CUST = null, QI_NEW = false, QI_ORDERS = [];
 const QI_KATS = [['notangka', '🎼 Not Angka'], ['pelayanan', '🙏 Pelayanan'], ['website', '💻 Website'], ['lainnya', '✨ Lainnya']];
-function qiParse(txt) {
-  let t = String(txt || '').trim().replace(/^(income|masuk|pemasukan)\s+/i, '');
-  const m = t.match(/(\d[\d.,]*)\s*(jt|juta|rb|ribu|k)?\b/i); if (!m) return null;
-  let raw = m[1], unit = (m[2] || '').toLowerCase(), n;
-  if (unit) { n = parseFloat(raw.replace(/\./g, '').replace(',', '.')); n *= (unit === 'jt' || unit === 'juta') ? 1e6 : 1e3; }
-  else n = parseFloat(raw.replace(/[.,]/g, ''));
-  n = Math.round(n || 0); if (!n) return null;
-  const rest = (t.slice(0, m.index) + ' ' + t.slice(m.index + m[0].length)).replace(/\s+/g, ' ').trim();
-  const words = rest ? rest.split(' ') : [];
-  return { jumlah: n, nama: words[0] || '', detail: words.slice(1).join(' ') };
+function qiAmount(t) {
+  const m = String(t || '').trim().match(/^(\d[\d.,]*)\s*(jt|juta|rb|ribu|k)?$/i); if (!m) return 0;
+  const u = (m[2] || '').toLowerCase(); let n;
+  if (u) { n = parseFloat(m[1].replace(/\./g, '').replace(',', '.')) * ((u === 'jt' || u === 'juta') ? 1e6 : 1e3); } else n = parseFloat(m[1].replace(/[.,]/g, ''));
+  return Math.round(n || 0);
 }
-function bukaQuickIncome() {
+async function bukaQuickIncome() {
   document.getElementById('qi-sheet').classList.add('open');
   const t = document.getElementById('qi-tgl'); if (!t.value) t.value = todayISO();
-  renderQiKat(); qiPreview(); renderQiRecent();
-  setTimeout(function () { document.getElementById('qi-text').focus(); }, 60);
+  try { QI_ORDERS = (await sb.from('notangka_order').select('*')).data || []; } catch (e) { QI_ORDERS = naData || []; }
+  qiReset(); renderQiRecent();
 }
 function tutupQuickIncome() { document.getElementById('qi-sheet').classList.remove('open'); }
-function renderQiKat() {
-  document.getElementById('qi-kat').innerHTML = QI_KATS.map(function (k) { return '<button type="button" class="' + (QI_KAT === k[0] ? 'on' : '') + '" onclick="QI_KAT=\'' + k[0] + '\';renderQiKat()">' + k[1] + '</button>'; }).join('');
+function qiReset() {
+  QI_CUST = null; QI_NEW = false; QI_STATUS = 'dikerjakan';
+  ['qi-cust', 'qi-wa', 'qi-ket', 'qi-nom', 'qi-klien'].forEach(function (id) { const e = document.getElementById(id); if (e) e.value = ''; });
+  qiRender();
 }
-// "order Rani lagu Bunga [50000]" → pesanan baru masuk Perlu dikerjakan
-function qiOrderParse(txt) {
-  const m = String(txt || '').trim().match(/^(order|pesan|pesanan)\s+(.+)$/i); if (!m) return null;
-  let rest = m[2], harga = 0;
-  const pm = qiParse(rest); if (pm) { harga = pm.jumlah; rest = (pm.nama + ' ' + pm.detail).trim(); }
-  const w = rest.split(/\s+/); return { nama: w[0] || '', detail: w.slice(1).join(' '), harga: harga };
+function setQiKat(k) { QI_KAT = k; qiRender(); }
+function setQiStatus(st) { QI_STATUS = st; qiRender(); }
+function qiOpenOrder(c) { return c ? QI_ORDERS.find(function (x) { return x.id === c.id && x.dikerjakan && !x.done; }) : null; }
+function qiRender() {
+  document.getElementById('qi-kat').innerHTML = QI_KATS.map(function (k) { return '<button type="button" class="' + (QI_KAT === k[0] ? 'on' : '') + '" onclick="setQiKat(\'' + k[0] + '\')">' + k[1] + '</button>'; }).join('');
+  const na = QI_KAT === 'notangka';
+  document.getElementById('qi-na').style.display = na ? '' : 'none';
+  document.getElementById('qi-lain').style.display = na ? 'none' : '';
+  // customer terpilih
+  const pick = document.getElementById('qi-cust-pick'), sel = document.getElementById('qi-cust-sel');
+  if (QI_CUST || QI_NEW) {
+    pick.style.display = 'none';
+    const open = qiOpenOrder(QI_CUST);
+    sel.innerHTML = '<div class="qi-chip-sel">' + (QI_NEW ? '🆕 ' : '👤 ') + lapEsc(QI_NEW ? document.getElementById('qi-cust').value : QI_CUST.nama)
+      + (QI_CUST && QI_CUST.wa ? ' <small>' + lapEsc(QI_CUST.wa) + '</small>' : '') + (QI_NEW ? ' <small>customer baru</small>' : '')
+      + '<button onclick="QI_CUST=null;QI_NEW=false;qiRender();document.getElementById(\'qi-cust\').focus()">✕</button></div>'
+      + (open ? '<div class="qi-open">🛠 Sedang dikerjakan: ' + lapEsc(open.detail || 'order ' + fmtDMY(open.tgl_order)) + '</div>' : '');
+    document.getElementById('qi-wa-wrap').style.display = QI_NEW ? '' : 'none';
+  } else { pick.style.display = ''; sel.innerHTML = ''; document.getElementById('qi-wa-wrap').style.display = 'none'; }
+  document.getElementById('qi-status').innerHTML =
+      '<button type="button" class="' + (QI_STATUS === 'dikerjakan' ? 'on' : '') + '" onclick="setQiStatus(\'dikerjakan\')">🛠 Dikerjakan</button>'
+    + '<button type="button" class="' + (QI_STATUS === 'selesai' ? 'on' : '') + '" onclick="setQiStatus(\'selesai\')">✓ Selesai</button>';
+  // info
+  const open = qiOpenOrder(QI_CUST); let info = '';
+  if (na) {
+    if (!QI_CUST && !QI_NEW) info = 'Pilih customer dulu 👆';
+    else if (QI_STATUS === 'dikerjakan') info = open ? '⚠ Customer ini masih punya order yang dikerjakan — akan dicatat sebagai <b>order tambahan</b>.' : '🛠 Masuk ke <b>Perlu dikerjakan</b>' + (QI_CUST ? ' sebagai order lagi' : '') + '. Nominal boleh dikosongkan.';
+    else info = open ? '✓ Order yang sedang dikerjakan akan <b>ditandai selesai</b> + harga dicatat.' : '✓ Dicatat sebagai order <b>langsung selesai</b> + harga, follow-up dimulai.';
+  }
+  document.getElementById('qi-info').innerHTML = info;
 }
-function qiPreview() {
-  const o = qiOrderParse(document.getElementById('qi-text').value);
-  if (o) { document.getElementById('qi-prev').innerHTML = '🛠 <b>Order baru</b> → Perlu dikerjakan · ' + (o.nama ? lapEsc(o.nama) : '<span style="color:#b3402f">nama?</span>') + (o.detail ? ' · ' + lapEsc(o.detail) : '') + (o.harga ? ' · ' + fmtRp(o.harga) : ''); return; }
-  const p = qiParse(document.getElementById('qi-text').value), el = document.getElementById('qi-prev');
-  el.innerHTML = p ? ('<b>' + fmtRp(p.jumlah) + '</b>' + (p.nama ? ' · ' + lapEsc(p.nama) : ' · <span style="color:#b3402f">tanpa nama</span>') + (p.detail ? ' · ' + lapEsc(p.detail) : '')) : '';
+function qiCustSearch() {
+  const q = document.getElementById('qi-cust').value.toLowerCase().trim(), box = document.getElementById('qi-cust-list');
+  if (!q) { box.innerHTML = ''; box.style.display = 'none'; return; }
+  const by = {}; QI_ORDERS.forEach(function (o) { const k = String(o.nama).trim().toLowerCase() + '|' + String(o.wa || '').replace(/[^0-9]/g, ''); if (!by[k] || String(o.tgl_order) > String(by[k].tgl_order)) by[k] = o; });
+  const m = Object.keys(by).map(function (k) { return by[k]; }).filter(function (o) { return String(o.nama).toLowerCase().indexOf(q) >= 0 || String(o.wa || '').indexOf(q) >= 0; })
+    .sort(function (a, b) { return (b.dikerjakan ? 1 : 0) - (a.dikerjakan ? 1 : 0) || String(a.nama).localeCompare(String(b.nama)); }).slice(0, 6);
+  box.innerHTML = m.map(function (o) { return '<div class="mr-item" onmousedown="event.preventDefault()" onclick="qiPickCust(' + o.id + ')">👤 ' + lapEsc(o.nama) + ' <span style="font-size:11px;color:var(--muted)">' + (o.wa || '') + (o.dikerjakan && !o.done ? ' · 🛠 dikerjakan' : '') + ((o.order_count || 1) > 1 ? ' · ' + o.order_count + '×' : '') + '</span></div>'; }).join('')
+    + '<div class="mr-item mr-new" onmousedown="event.preventDefault()" onclick="qiNewCust()">＋ Customer baru: <b>' + lapEsc(document.getElementById('qi-cust').value.trim()) + '</b></div>';
+  box.style.display = 'block';
+}
+function qiPickCust(id) {
+  QI_CUST = QI_ORDERS.find(function (x) { return x.id === id; }); QI_NEW = false;
+  QI_STATUS = qiOpenOrder(QI_CUST) ? 'selesai' : 'dikerjakan';
+  document.getElementById('qi-cust-list').style.display = 'none';
+  const op = qiOpenOrder(QI_CUST); if (op && op.detail) document.getElementById('qi-ket').value = op.detail;
+  qiRender(); setTimeout(function () { document.getElementById('qi-nom').focus(); }, 50);
+}
+function qiNewCust() {
+  if (!document.getElementById('qi-cust').value.trim()) return;
+  QI_CUST = null; QI_NEW = true; QI_STATUS = 'dikerjakan';
+  document.getElementById('qi-cust-list').style.display = 'none'; qiRender();
+  setTimeout(function () { document.getElementById('qi-wa').focus(); }, 50);
 }
 async function renderQiRecent() {
   const el = document.getElementById('qi-recent'); el.innerHTML = '';
@@ -3507,60 +3561,46 @@ async function hapusQi(id) {
 }
 function qiRefresh() { try { if (curPageName === 'pendapatan') loadPendapatan(); if (curPageName === 'pemasukan') loadPemasukan(); if (curPageName === 'notangka') loadNotangka(); } catch (e) {} }
 let _qiSaving = false;
-async function simpanQuickOrder(o) {
-  if (!o.nama) { showToast('⚠ Tulis nama customer, cth. order Rani lagu Bunga'); return; }
-  _qiSaving = true;
-  try {
-    const tgl = document.getElementById('qi-tgl').value || todayISO();
-    let orders = naData; if (!orders || !orders.length) { try { orders = (await sb.from('notangka_order').select('*')).data || []; } catch (e) { orders = []; } }
-    const ex = orders.filter(function (x) { return String(x.nama || '').trim().toLowerCase() === o.nama.toLowerCase(); });
-    let id = null, msg;
-    if (ex.length === 1 && !ex[0].dikerjakan && confirm(ex[0].nama + ' sudah pernah order (' + (ex[0].wa || 'tanpa WA') + ').\n\nOK = catat sebagai ORDER LAGI customer ini\nBatal = buat customer baru')) {
-      const c = ex[0], cnt = (c.order_count || 1) + 1;
-      const r = await sb.from('notangka_order').update({ step: 0, done: false, silent: false, tgl_order: tgl, tgl_selesai: null, dikerjakan: true, order_count: cnt, detail: o.detail || c.detail || '' }).eq('id', c.id);
-      if (r.error) throw new Error(r.error.message); id = c.id; msg = '✓ Order lagi ' + c.nama + ' (' + cnt + '×) · masuk Perlu dikerjakan';
-    } else {
-      const r = await sb.from('notangka_order').insert({ nama: o.nama, wa: '', detail: o.detail, tgl_order: tgl, step: 0, done: false, dikerjakan: true }).select('id');
-      if (r.error) throw new Error(r.error.message); id = r.data && r.data[0] && r.data[0].id; msg = '✓ Order ' + o.nama + ' masuk Perlu dikerjakan';
-    }
-    if (id && o.harga) { const r2 = await sb.from('notangka_penjualan').insert({ order_id: id, nama: o.nama, tanggal: tgl, detail: o.detail, harga: o.harga, kategori: 'notangka' }); if (r2.error) throw new Error(r2.error.message); }
-    showToast(msg);
-    document.getElementById('qi-text').value = ''; qiPreview(); renderQiRecent(); try { naData = []; } catch (e) {} qiRefresh();
-  } catch (e) { showToast('⚠ Gagal: ' + e.message); }
-  finally { _qiSaving = false; }
-}
-async function simpanQuickIncome() {
+async function simpanQuick() {
   if (_qiSaving) return;
-  const ord = qiOrderParse(document.getElementById('qi-text').value);
-  if (ord) { await simpanQuickOrder(ord); return; }
-  const p = qiParse(document.getElementById('qi-text').value);
-  if (!p) { showToast('⚠ Tulis nominalnya, cth. 50000 Rani'); return; }
+  const tgl = document.getElementById('qi-tgl').value || todayISO();
+  const ket = document.getElementById('qi-ket').value.trim();
+  const nomTxt = document.getElementById('qi-nom').value.trim(), nom = qiAmount(nomTxt);
+  if (nomTxt && !nom) { showToast('⚠ Nominal tidak terbaca, cth. 50000 / 50rb'); return; }
+  const chk = function (r) { if (r && r.error) throw new Error(r.error.message); return r; };
   _qiSaving = true;
   try {
-    const tgl = document.getElementById('qi-tgl').value || todayISO();
-    // kalau ada order not angka yang sedang dikerjakan atas nama ini → tawarkan langsung selesaikan order itu
-    if (QI_KAT === 'notangka' && p.nama) {
-      let orders = naData;
-      if (!orders || !orders.length) { try { orders = (await sb.from('notangka_order').select('*')).data || []; } catch (e) { orders = []; } }
-      const nm = p.nama.toLowerCase();
-      const o = orders.find(function (x) { return x.dikerjakan && !x.done && String(x.nama || '').trim().toLowerCase().indexOf(nm) === 0; });
-      if (o && confirm('"' + o.nama + '" punya order yang sedang dikerjakan' + (o.detail ? ' (' + o.detail + ')' : '') + '.\n\nOK = tandai order itu SELESAI dengan harga ' + fmtRp(p.jumlah) + '\nBatal = catat sebagai pemasukan terpisah')) {
-        const r1 = await sb.from('notangka_order').update({ dikerjakan: false, tgl_selesai: tgl, step: 0 }).eq('id', o.id); if (r1.error) throw new Error(r1.error.message);
-        const ex = await sb.from('notangka_penjualan').select('id').eq('order_id', o.id).gte('tanggal', String(o.tgl_order)).order('id', { ascending: false }).limit(1);
-        const r2 = (ex.data && ex.data[0]) ? await sb.from('notangka_penjualan').update({ harga: p.jumlah, tanggal: tgl }).eq('id', ex.data[0].id)
-          : await sb.from('notangka_penjualan').insert({ order_id: o.id, nama: o.nama, tanggal: tgl, detail: p.detail || o.detail || '', harga: p.jumlah, kategori: 'notangka' });
-        if (r2.error) throw new Error(r2.error.message);
-        showToast('✓ Order ' + o.nama + ' selesai · ' + fmtRp(p.jumlah) + ' · follow-up dimulai');
-        document.getElementById('qi-text').value = ''; qiPreview(); renderQiRecent(); qiRefresh();
-        return;
+    if (QI_KAT !== 'notangka') {
+      const kl = document.getElementById('qi-klien').value.trim();
+      if (!kl) { showToast('⚠ Isi nama klien'); return; } if (!nom) { showToast('⚠ Isi nominal'); return; }
+      chk(await sb.from('notangka_penjualan').insert({ order_id: null, nama: kl, tanggal: tgl, detail: ket, harga: nom, kategori: QI_KAT }));
+      showToast('✓ ' + fmtRp(nom) + ' · ' + kl + ' tercatat');
+    } else {
+      if (!QI_CUST && !QI_NEW) { showToast('⚠ Pilih customer dulu'); return; }
+      if (QI_STATUS === 'selesai' && !nom && !confirm('Nominal kosong. Tetap simpan tanpa harga?')) return;
+      const selesai = QI_STATUS === 'selesai';
+      let id, nama;
+      const open = qiOpenOrder(QI_CUST);
+      if (QI_NEW) {
+        nama = document.getElementById('qi-cust').value.trim();
+        const r = chk(await sb.from('notangka_order').insert({ nama: nama, wa: document.getElementById('qi-wa').value.trim(), detail: ket, tgl_order: tgl, step: 0, done: false, dikerjakan: !selesai, tgl_selesai: selesai ? tgl : null }).select('id'));
+        id = r.data && r.data[0] && r.data[0].id;
+      } else if (open && selesai) {
+        nama = open.nama; id = open.id;
+        chk(await sb.from('notangka_order').update({ dikerjakan: false, tgl_selesai: tgl, step: 0, detail: ket || open.detail || '' }).eq('id', id));
+        if (nom) {
+          const ex = (await sb.from('notangka_penjualan').select('id').eq('order_id', id).gte('tanggal', String(open.tgl_order)).order('id', { ascending: false }).limit(1)).data || [];
+          if (ex.length) { chk(await sb.from('notangka_penjualan').update({ harga: nom, tanggal: tgl }).eq('id', ex[0].id)); id = null; }
+        }
+      } else {
+        const c = QI_CUST; nama = c.nama; id = c.id; const cnt = (c.order_count || 1) + 1;
+        chk(await sb.from('notangka_order').update({ step: 0, done: false, silent: false, tgl_order: tgl, tgl_selesai: selesai ? tgl : null, dikerjakan: !selesai, order_count: cnt, detail: ket || '' }).eq('id', id));
       }
+      if (id && nom) chk(await sb.from('notangka_penjualan').insert({ order_id: id, nama: nama, tanggal: tgl, detail: ket, harga: nom, kategori: 'notangka' }));
+      showToast(selesai ? ('✓ ' + nama + ' selesai' + (nom ? ' · ' + fmtRp(nom) : '') + ' · follow-up dimulai') : ('🛠 ' + nama + ' masuk Perlu dikerjakan' + (nom ? ' · ' + fmtRp(nom) : '')));
     }
-    const row = { order_id: null, nama: p.nama || '—', tanggal: tgl, detail: p.detail, harga: p.jumlah, kategori: QI_KAT };
-    const r = await sb.from('notangka_penjualan').insert(row);
-    if (r.error) throw new Error(r.error.message);
-    showToast('✓ ' + fmtRp(p.jumlah) + (p.nama ? ' · ' + p.nama : '') + ' tercatat');
-    document.getElementById('qi-text').value = ''; qiPreview(); renderQiRecent(); qiRefresh();
-    document.getElementById('qi-text').focus();
+    try { QI_ORDERS = (await sb.from('notangka_order').select('*')).data || []; } catch (e) {}
+    qiReset(); renderQiRecent(); qiRefresh();
   } catch (e) { showToast('⚠ Gagal: ' + e.message); }
   finally { _qiSaving = false; }
 }
@@ -3890,15 +3930,31 @@ document.querySelectorAll('.date-hidden').forEach(function (inp) { inp.addEventL
 </script>
 
 <!-- Tombol cepat + Pemasukan -->
-<button id="qi-fab" onclick="bukaQuickIncome()" title="Catat pemasukan cepat">＋ 💰</button>
+<button id="qi-fab" onclick="bukaQuickIncome()" title="Catat pesanan / pemasukan">＋ 💰</button>
 <div id="qi-sheet" onclick="if(event.target===this)tutupQuickIncome()">
   <div class="qi-box">
-    <div class="qi-head"><span>💰 Catat Pemasukan</span><button onclick="tutupQuickIncome()">✕</button></div>
-    <input id="qi-text" type="text" autocomplete="off" placeholder="cth. 50000 Rani lagu Bunga" oninput="qiPreview()" onkeydown="if(event.key==='Enter'){event.preventDefault();simpanQuickIncome();}">
+    <div class="qi-head"><span>💰 Catat Pesanan / Pemasukan</span><button onclick="tutupQuickIncome()">✕</button></div>
     <div class="qi-kat" id="qi-kat"></div>
-    <div class="qi-row"><label>📅</label><input id="qi-tgl" type="date"><button class="qi-save" onclick="simpanQuickIncome()">Simpan</button></div>
-    <div id="qi-prev" class="qi-prev"></div>
-    <div class="qi-tip">💰 Pemasukan: <b>50000 Rani lagu Bunga</b> (bisa 50rb / 1,5jt)<br>🛠 Pesanan baru: <b>order Rani lagu Bunga</b> (harga opsional) · Enter untuk simpan</div>
+    <div id="qi-na">
+      <div class="qi-lbl">Customer</div>
+      <div id="qi-cust-pick" style="position:relative">
+        <input id="qi-cust" type="text" autocomplete="off" placeholder="🔍 Cari customer lama / ketik nama baru" oninput="qiCustSearch()">
+        <div id="qi-cust-list" class="qi-cust-list"></div>
+      </div>
+      <div id="qi-cust-sel"></div>
+      <div id="qi-wa-wrap" style="display:none"><input id="qi-wa" type="tel" placeholder="No. WA (opsional)"></div>
+      <div class="qi-lbl">Status</div>
+      <div class="qi-seg" id="qi-status"></div>
+    </div>
+    <div id="qi-lain" style="display:none">
+      <div class="qi-lbl">Klien</div><input id="qi-klien" type="text" placeholder="cth. GKI Kebayoran / Bu Rina">
+    </div>
+    <div class="qi-grid">
+      <div><div class="qi-lbl">Keterangan</div><input id="qi-ket" type="text" placeholder="cth. lagu Bunga"></div>
+      <div><div class="qi-lbl">Nominal (Rp)</div><input id="qi-nom" type="text" inputmode="numeric" placeholder="cth. 50000 / 50rb" onkeydown="if(event.key==='Enter'){event.preventDefault();simpanQuick();}"></div>
+    </div>
+    <div class="qi-row"><label>📅</label><input id="qi-tgl" type="date"><button class="qi-save" onclick="simpanQuick()">💾 Simpan</button></div>
+    <div id="qi-info" class="qi-prev"></div>
     <div id="qi-recent"></div>
   </div>
 </div>
