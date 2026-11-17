@@ -3457,6 +3457,17 @@ async function loadLapToday() {
     }).join('') + '</div><div class="lt-note">Dari absensi hari ini + ' + hari + ' 4 minggu terakhir · tap nama untuk isi laporan</div></div>';
 }
 
+// Laporan disimpan → otomatis absensi hadir di tanggal itu (kalau belum ada)
+async function autoHadirDariLaporan(nama, tgl) {
+  try {
+    const ex = await sb.from('absensi_harian').select('id').eq('tanggal', tgl).ilike('nama', nama).eq('jenis', 'hadir').limit(1);
+    if (ex.data && ex.data.length) return false;
+    try { await ensureRoster(nama); } catch (e) {}
+    const r = await sb.from('absensi_harian').insert({ tanggal: tgl, nama: nama, jenis: 'hadir', jumlah: 1, waktu: new Date().toISOString() });
+    return !r.error;
+  } catch (e) { return false; }
+}
+
 async function tandaiHadir(nama) {
   const tgl = getTglInput();
   try {
@@ -3635,7 +3646,8 @@ async function submitLaporan() {
     if (!laporanCache[s.id]) laporanCache[s.id] = [];
     laporanCache[s.id].push({ id: result.id, murid_id: s.id, tanggal: getTglInput(), materi });
     renderLaporan(s.id);
-    showToast('✓ Laporan berhasil disimpan!');
+    const _auto = await autoHadirDariLaporan(s.nama, getTglInput());
+    showToast('✓ Laporan berhasil disimpan!' + (_auto ? ' · otomatis tercatat hadir' : ''));
     loadLapToday();
     // clear form
     ['materi'].forEach(id => document.getElementById(id).value = '');
