@@ -579,6 +579,58 @@
   main input[type=text],main input[type=tel],main input[type=number],main select,main textarea{border-radius:12px}
   main .rekom-chip{border-radius:999px}
   main .laporan-card,main .bayar-bulan-card{border-radius:16px}
+  /* ══ Beranda gaya app ══ */
+  body.home-active{background:#faf5ee!important}
+  body.home-active #home-screen{display:block!important;min-height:100vh;padding:18px 16px 120px!important;max-width:560px;margin:0 auto}
+  body.home-active #group-bar{display:flex!important}
+  #qi-fab{display:none!important}
+  .hm-top{display:flex;align-items:center;gap:12px;margin:4px 2px 18px}
+  .hm-logo{width:52px;height:52px;border-radius:50%;object-fit:contain;background:linear-gradient(135deg,#64101F,#45091A);padding:5px;box-shadow:0 6px 16px rgba(74,13,26,.25)}
+  .hm-hello{flex:1}
+  .hm-greet{font-size:14px;color:#8a7d6a}
+  .hm-name{font-size:22px;font-weight:800;color:#2b0714;line-height:1.15}
+  .hm-date{background:#fff;border:1px solid #f0e6d4;border-radius:999px;padding:8px 14px;font-weight:700;color:#4a0d1a;font-size:13px}
+  .hm-hero{position:relative;overflow:hidden;border-radius:26px;padding:22px 20px;color:#fff;background:linear-gradient(135deg,#7a1428 0%,#4a0d1a 60%,#36071a 100%);box-shadow:0 14px 30px rgba(74,13,26,.35);cursor:pointer}
+  .hm-hero::before{content:'';position:absolute;right:-60px;top:-60px;width:200px;height:200px;border-radius:50%;background:rgba(201,162,77,.18)}
+  .hm-hero::after{content:'';position:absolute;right:30px;bottom:-80px;width:160px;height:160px;border-radius:50%;background:rgba(255,255,255,.06)}
+  .hm-hero-lbl{font-size:14px;color:#f1d9a0;font-weight:600;position:relative}
+  .hm-hero-num{font-size:46px;font-weight:800;line-height:1.1;margin:6px 0 4px;position:relative}
+  .hm-hero-num small{font-size:16px;font-weight:600;opacity:.75}
+  .hm-hero-sub{display:inline-block;background:rgba(255,255,255,.14);border-radius:12px;padding:7px 12px;font-size:13px;font-weight:600;position:relative}
+  .hm-hero-btns{display:flex;gap:8px;margin-top:14px;position:relative;z-index:1}
+  .hm-hero-btns button{border:none;border-radius:999px;padding:10px 16px;font-weight:800;font-size:13.5px;cursor:pointer;font-family:inherit;background:linear-gradient(135deg,#f3d58a,#C9A24D);color:#2b0714}
+  .hm-hero-btns button+button{background:rgba(255,255,255,.16);color:#fff}
+  .hm-hero-art{position:absolute;right:18px;top:22px;font-size:54px;filter:drop-shadow(0 6px 10px rgba(0,0,0,.3))}
+  .hm-cards{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+  .hm-card{background:#fff;border:1px solid #f0e6d4;border-radius:22px;padding:14px;cursor:pointer;transition:transform .12s}
+  .hm-card:active{transform:scale(.98)}
+  .hm-card-h{display:flex;align-items:center;gap:8px}
+  .hm-card-h b{display:block;font-size:14px;color:#2b0714}.hm-card-h small{font-size:11.5px;color:#9a8f7c}
+  .hm-chev{margin-left:auto;color:#b9ad98;font-size:20px}
+  .hm-ic{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+  .hm-ic.red{background:#ffe4e0}.hm-ic.gold{background:#fff1cc}
+  .hm-card-n{font-size:20px;font-weight:800;color:#2b0714;margin-top:12px}
+  .hm-card-n small{font-size:12px;font-weight:600;color:#9a8f7c}
+  .hm-card-s{font-size:12px;color:#9a8f7c;margin-top:4px}
+  .hm-quick{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:20px}
+  .hm-quick button{display:flex;flex-direction:column;align-items:center;gap:8px;border:none;background:none;font-weight:700;font-size:13px;color:#2b0714;cursor:pointer;font-family:inherit}
+  .hm-quick span{width:58px;height:58px;border-radius:18px;display:flex;align-items:center;justify-content:center;font-size:24px}
+  .hm-quick .q1{background:#e3f4ec}.hm-quick .q2{background:#e6ecfb}.hm-quick .q3{background:#ffe4e0}.hm-quick .q4{background:#fff1cc}
+  /* ══ Bottom nav dengan + di tengah ══ */
+  #group-bar{overflow:visible!important;align-items:flex-end}
+  #group-bar .gb-plus{flex:0 0 72px;padding:0!important;background:none!important;position:relative}
+  .gb-plus-c{width:60px;height:60px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:700;color:#2b0714;background:linear-gradient(135deg,#f3d58a,#C9A24D);box-shadow:0 8px 20px rgba(201,162,77,.5);border:4px solid #faf5ee;transform:translateY(-22px)}
+  #group-bar .gb-plus:active .gb-plus-c{transform:translateY(-22px) scale(.94)}
+  .act-sheet{display:none;position:fixed;inset:0;background:rgba(20,5,10,.45);z-index:240;align-items:flex-end;justify-content:center}
+  .act-sheet.open{display:flex}
+  .act-box{background:#fff;width:100%;max-width:480px;border-radius:24px 24px 0 0;padding:16px 14px calc(18px + env(safe-area-inset-bottom));animation:qiUp .2s ease-out}
+  .act-title{font-weight:800;font-size:16px;margin:2px 6px 10px;color:#2b0714}
+  .act-box button{display:flex;align-items:center;gap:12px;width:100%;border:none;background:none;padding:10px 8px;border-radius:16px;cursor:pointer;text-align:left;font-family:inherit}
+  .act-box button:hover{background:#faf5ee}
+  .act-box button span{width:46px;height:46px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:21px;flex-shrink:0}
+  .act-box .a1{background:#e3f4ec}.act-box .a2{background:#e6ecfb}.act-box .a3{background:#fff1cc}.act-box .a4{background:#f1e8ff}
+  .act-box b{display:block;font-size:15px;color:#2b0714}.act-box small{font-size:12px;color:#9a8f7c}
+  @media (min-width:641px){ .act-sheet{align-items:center} .act-box{border-radius:24px} }
 </style>
 </head>
 <body>
@@ -607,21 +659,50 @@
 </header>
 
 <div id="home-screen">
-  <img id="home-logo" alt="SPPC" class="home-logo">
-  <div class="home-menu">
-    <button class="home-btn" onclick="enterGroup('isi')"><span class="home-ic">📝</span><span>Isi Data</span></button>
-    <button class="home-btn" onclick="enterGroup('uang')"><span class="home-ic">💰</span><span>Keuangan</span></button>
-    <button class="home-btn" onclick="enterGroup('murid')"><span class="home-ic">👥</span><span>Murid</span></button>
-    <button class="home-btn" onclick="enterGroup('notangka')"><span class="home-ic">🎼</span><span>Not Angka</span></button>
+  <div class="hm-top">
+    <img id="home-logo" alt="SPPC" class="hm-logo">
+    <div class="hm-hello"><div class="hm-greet" id="hm-greet">Halo,</div><div class="hm-name">Stanley 👋</div></div>
+    <div class="hm-date" id="hm-date"></div>
+  </div>
+  <div class="hm-hero" onclick="showPage('laporan')">
+    <div class="hm-hero-lbl" id="hm-hari">Les hari ini</div>
+    <div class="hm-hero-num"><span id="hm-les-n">–</span> <small>murid</small></div>
+    <div class="hm-hero-sub" id="hm-les-sub">Memuat…</div>
+    <div class="hm-hero-btns"><button onclick="event.stopPropagation();showPage('laporan')">📝 Isi laporan</button><button onclick="event.stopPropagation();showPage('absensi')">✓ Absensi</button></div>
+    <div class="hm-hero-art">🎹</div>
+  </div>
+  <div class="hm-cards">
+    <div class="hm-card" onclick="showPage('bayar')"><div class="hm-card-h"><span class="hm-ic red">🧾</span><div><b>Belum bayar</b><small>Invoice</small></div><span class="hm-chev">›</span></div><div class="hm-card-n" id="hm-bayar-n">–</div><div class="hm-card-s" id="hm-bayar-s"></div></div>
+    <div class="hm-card" onclick="showPage('notangka')"><div class="hm-card-h"><span class="hm-ic gold">🎼</span><div><b>Not Angka</b><small>Follow-up</small></div><span class="hm-chev">›</span></div><div class="hm-card-n" id="hm-fu-n">–</div><div class="hm-card-s" id="hm-fu-s"></div></div>
+  </div>
+  <div class="hm-quick">
+    <button onclick="showPage('laporan')"><span class="q1">📝</span>Laporan</button>
+    <button onclick="showPage('absensi')"><span class="q2">🗓️</span>Absensi</button>
+    <button onclick="showPage('invoice')"><span class="q3">🧾</span>Invoice</button>
+    <button onclick="showPage('notangka')"><span class="q4">🎼</span>Not Angka</button>
   </div>
 </div>
 
 <div class="tab-bar" id="group-bar">
+  <button class="tab-btn" data-group="home" onclick="goHome()"><span class="gb-ic">🏠</span><span class="gb-lb">Beranda</span></button>
   <button class="tab-btn active" data-group="isi" onclick="showGroup('isi')"><span class="gb-ic">📝</span><span class="gb-lb">Isi Data</span></button>
+  <button class="tab-btn gb-plus" data-group="plus" onclick="bukaPlusSheet()"><span class="gb-plus-c">＋</span></button>
   <button class="tab-btn" data-group="uang" onclick="showGroup('uang')"><span class="gb-ic">💰</span><span class="gb-lb">Keuangan</span></button>
-  <button class="tab-btn" data-group="murid" onclick="showGroup('murid')"><span class="gb-ic">👥</span><span class="gb-lb">Murid</span></button>
-  <button class="tab-btn" data-group="notangka" onclick="showGroup('notangka')"><span class="gb-ic">🎼</span><span class="gb-lb">Not Angka</span></button>
+  <button class="tab-btn" data-group="lainnya" onclick="bukaLainnya()"><span class="gb-ic">☰</span><span class="gb-lb">Lainnya</span></button>
 </div>
+<div class="act-sheet" id="plus-sheet" onclick="if(event.target===this)this.classList.remove('open')"><div class="act-box">
+  <div class="act-title">Catat cepat</div>
+  <button onclick="tutupSheets();showPage('laporan')"><span class="a1">📝</span><div><b>Isi laporan</b><small>Catatan les hari ini</small></div></button>
+  <button onclick="tutupSheets();showPage('absensi')"><span class="a2">✓</span><div><b>Absensi</b><small>Tandai murid hadir</small></div></button>
+  <button onclick="tutupSheets();bukaQuickIncome()"><span class="a3">🎼</span><div><b>Pesanan / Pemasukan</b><small>Not angka, pelayanan, website</small></div></button>
+</div></div>
+<div class="act-sheet" id="lainnya-sheet" onclick="if(event.target===this)this.classList.remove('open')"><div class="act-box">
+  <div class="act-title">Lainnya</div>
+  <button onclick="tutupSheets();showPage('murid')"><span class="a1">👥</span><div><b>Data Murid</b><small>Tambah, edit, grup, tarif</small></div></button>
+  <button onclick="tutupSheets();showPage('notangka')"><span class="a2">🎼</span><div><b>Not Angka</b><small>Order & follow-up</small></div></button>
+  <button onclick="tutupSheets();showPage('pendapatan')"><span class="a3">💰</span><div><b>Pendapatan & Jasa</b><small>Kalender omzet, history</small></div></button>
+  <button onclick="tutupSheets();showPage('setting')"><span class="a4">⚙️</span><div><b>Setting</b><small>Penagihan & backup</small></div></button>
+</div></div>
 <div class="subtab-bar" id="subtab-bar"></div>
 
 <main>
@@ -2001,6 +2082,8 @@ function goHome(noPush) {
   document.body.classList.add('home-active');
   document.querySelectorAll('.page').forEach(function (p) { p.classList.remove('active'); });
   curPageName = null;
+  document.querySelectorAll('#group-bar .tab-btn').forEach(function (b) { b.classList.toggle('active', b.getAttribute('data-group') === 'home'); });
+  try { loadHome(); } catch (e) {}
   if (!noPush && location.pathname !== '/') { try { history.pushState({}, '', '/'); } catch (e) {} }
   document.title = 'SPPC — Dashboard Guru';
 }
@@ -2055,7 +2138,7 @@ function showPage(name) {
       void pg.offsetWidth; pg.classList.add(dir);
     }
   }
-  document.querySelectorAll('#group-bar .tab-btn').forEach(b => b.classList.toggle('active', b.getAttribute('data-group') === group));
+  { const nk = (group === 'murid' || group === 'notangka') ? 'lainnya' : group; document.querySelectorAll('#group-bar .tab-btn').forEach(b => b.classList.toggle('active', b.getAttribute('data-group') === nk)); }
   buildSubtabs(group, name);
   if (name === 'murid') renderStudentList();
   if (name === 'laporan') loadLapToday();
@@ -2076,6 +2159,7 @@ async function loadStudents() {
     await loadGrupMap();
     refreshSelect();
     if (curPageName === 'laporan') loadLapToday();
+    if (document.body.classList.contains('home-active')) { try { loadHome(); } catch (e) {} }
     renderStudentList();
     loadRosterNames();
   } catch(e) {
@@ -3710,6 +3794,50 @@ function initCollapsible() {
       try { localStorage.setItem('sppc_ck_' + key, c ? '1' : '0'); } catch (e2) {}
     });
   });
+}
+
+
+// ── Beranda gaya app ──
+function bukaPlusSheet() { document.getElementById('plus-sheet').classList.add('open'); }
+function bukaLainnya() { document.getElementById('lainnya-sheet').classList.add('open'); }
+function tutupSheets() { document.querySelectorAll('.act-sheet.open').forEach(function (x) { x.classList.remove('open'); }); }
+async function loadHome() {
+  const h = new Date().getHours();
+  const g = h < 11 ? 'Selamat pagi,' : h < 15 ? 'Selamat siang,' : h < 18 ? 'Selamat sore,' : 'Selamat malam,';
+  const set = function (id, v) { const e = document.getElementById(id); if (e) e.innerHTML = v; };
+  set('hm-greet', g);
+  const today = todayISO(); const d = new Date(today + 'T00:00:00');
+  set('hm-date', d.getDate() + ' ' + ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'][d.getMonth()]);
+  set('hm-hari', 'Les hari ini · ' + HARI_ID[d.getDay()]);
+  // les hari ini
+  try {
+    const wh = await weekdayHistory(today);
+    const ab = await sb.from('absensi_harian').select('nama,jenis,jumlah').eq('tanggal', today);
+    const names = {};
+    Object.keys(wh.map).forEach(function (k) { names[k] = 1; });
+    (ab.data || []).forEach(function (x) { if (String(x.jenis || 'hadir') === 'hadir' && Number(x.jumlah) > 0) names[String(x.nama).trim().toLowerCase()] = 1; });
+    const stop = await namaBerhentiSet(); Object.keys(stop).forEach(function (k) { delete names[k]; });
+    const lr = await sb.from('laporan').select('murid_id').eq('tanggal', today);
+    const done = {}; (lr.data || []).forEach(function (x) { const m = students.find(function (s) { return s.id === x.murid_id; }); if (m) done[String(m.nama).trim().toLowerCase()] = 1; });
+    const n = Object.keys(names).length, belum = Object.keys(names).filter(function (k) { return !done[k]; }).length;
+    set('hm-les-n', n);
+    set('hm-les-sub', n ? (belum ? '⚠️ ' + belum + ' belum dilaporkan' : '✓ Semua sudah dilaporkan') : 'Tidak ada jadwal les hari ini');
+  } catch (e) { set('hm-les-sub', ''); }
+  // belum bayar
+  try {
+    const iv = (await sb.from('invoice').select('total,lunas,bulan').eq('lunas', false)).data || [];
+    const tot = iv.reduce(function (a, x) { return a + (Number(x.total) || 0); }, 0);
+    set('hm-bayar-n', iv.length ? fmtRp(tot) : '✓ Lunas');
+    set('hm-bayar-s', iv.length ? iv.length + ' invoice belum lunas' : 'Semua invoice lunas');
+  } catch (e) {}
+  // follow-up
+  try {
+    const na = (await sb.from('notangka_order').select('tgl_order,tgl_selesai,step,done,silent,dikerjakan')).data || [];
+    const kerja = na.filter(function (o) { return o.dikerjakan && !o.done; }).length;
+    let due = 0; na.forEach(function (o) { if (o.done || o.silent || o.dikerjakan || (o.step || 0) >= NA_OFFSETS.length) return; const dd = naAddOffset(o.tgl_selesai || o.tgl_order, NA_OFFSETS[o.step || 0]); if (naIso(dd) <= today) due++; });
+    set('hm-fu-n', due + ' <small>follow-up</small>');
+    set('hm-fu-s', kerja ? '🛠 ' + kerja + ' perlu dikerjakan' : 'Tidak ada yang dikerjakan');
+  } catch (e) {}
 }
 
 // ── Submit laporan ────────────────────────────────────
