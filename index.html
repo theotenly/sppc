@@ -551,6 +551,34 @@
   @media (max-width:640px){ .subtab-bar{padding:7px 8px;gap:6px} .subtab-btn{padding:11px 12px!important;font-size:13px!important;min-height:44px} }
   .ab-hadir-tg{flex:1;min-height:40px;border:2px solid var(--border);background:#fff;border-radius:12px;font-weight:700;font-size:14px;color:var(--muted);cursor:pointer;font-family:inherit;padding:6px 12px}
   .ab-hadir-tg.on{background:#e3f4ec;border-color:#3f7d6a;color:#1f5a47}
+  /* ── Section dilipat ── */
+  .ck-head{cursor:pointer;user-select:none}
+  .ck-arrow{display:inline-block;margin-left:6px;font-size:12px;color:var(--muted);transition:transform .2s}
+  .section.collapsed .ck-arrow{transform:rotate(-90deg)}
+  .section.collapsed > :not(.section-header){display:none!important}
+  .section.collapsed > .section-header{margin-bottom:0;padding-bottom:0;border-bottom:none}
+  /* ── Menu ⋯ ── */
+  .more-wrap{position:relative;display:inline-block}
+  .more-btn{min-width:36px;font-weight:800;letter-spacing:1px}
+  .more-menu{display:none;position:absolute;right:0;top:calc(100% + 4px);background:#fff;border:1px solid var(--border);border-radius:14px;box-shadow:0 10px 26px rgba(0,0,0,.16);z-index:40;min-width:190px;padding:5px;animation:qiUp .14s ease-out}
+  .more-menu.open{display:block}
+  .more-menu button{display:block;width:100%;text-align:left;border:none;background:none;padding:10px 12px;border-radius:10px;font-size:14px;cursor:pointer;font-family:inherit;color:var(--ink);white-space:nowrap}
+  .more-menu button:hover{background:#f7f1e4}
+  .more-menu button.danger{color:#b3261e}
+  .abs-all-btn{margin-top:6px;border:1px dashed var(--border);background:#fff;border-radius:999px;padding:8px 14px;font-size:12.5px;font-weight:600;color:var(--ink);cursor:pointer;font-family:inherit}
+  /* ── Gaya seragam (playful & rapi) ── */
+  main .section{border-radius:20px;border:none;box-shadow:0 6px 22px rgba(74,13,26,.07)}
+  main .section-icon{background:linear-gradient(135deg,#ffe7a8,#ffd1dc);border-radius:12px}
+  main .section-header{border-bottom:1px dashed var(--cream)}
+  main .inv-entity{border-radius:16px;border:1px solid #f0e8d8;background:#fff;box-shadow:none}
+  main .student-card{border-radius:16px;border:1px solid #f0e8d8;background:#fff}
+  main .student-card .avatar{background:linear-gradient(135deg,#ffe7a8,#ffb3c7);color:#4a0d1a}
+  main .ab-card{border-radius:16px;border:1px solid #f0e8d8}
+  main .btn-sm{border-radius:999px}
+  main .btn{border-radius:14px}
+  main input[type=text],main input[type=tel],main input[type=number],main select,main textarea{border-radius:12px}
+  main .rekom-chip{border-radius:999px}
+  main .laporan-card,main .bayar-bulan-card{border-radius:16px}
 </style>
 </head>
 <body>
@@ -1792,11 +1820,8 @@ function naListCard(o) {
   const sub = (o.wa ? o.wa + ' · ' : '') + (o.detail ? o.detail + ' · ' : '') + 'order ' + fmtDMY(o.tgl_order) + (_tot ? ' · 💰 ' + fmtRp(_tot) : '');
   const active = !o.done && !o.silent;
   const badge = naTierBadge(o);
-  const btns = '<button class="btn-sm" onclick="togglePriority(' + o.id + ')" title="Tandai / lepas priority">' + (o.priority ? '⭐' : '☆') + '</button>'
-    + '<button class="btn-sm" onclick="reorderNotangka(' + o.id + ')" title="Order lagi (reset follow-up ke 2 minggu)">🔁</button>'
-    + (active ? '<button class="btn-sm" onclick="silentNotangka(' + o.id + ')" title="Silent: stop follow-up, simpan kontak">🔕</button>' : '')
-    + '<button class="btn-sm" onclick="editNotangka(' + o.id + ')">✏️</button>'
-    + '<button class="btn-sm danger" onclick="hapusNotangka(' + o.id + ')">🗑</button>';
+  const btns = '<button class="btn-sm" onclick="reorderNotangka(' + o.id + ')" title="Order lagi">🔁 Order lagi</button>'
+    + moreMenu([[(o.priority ? '☆ Lepas priority' : '⭐ Jadikan priority'), 'togglePriority(' + o.id + ')'], active ? ['🔕 Silent (stop follow-up)', 'silentNotangka(' + o.id + ')'] : null, ['✏️ Edit', 'editNotangka(' + o.id + ')'], ['🗑 Hapus', 'hapusNotangka(' + o.id + ')', true]]);
   return '<div class="inv-entity"><div style="min-width:0"><div class="inv-entity-title">' + o.nama + badge + '</div><div class="inv-entity-sub">' + sub + '</div><div style="font-size:11.5px;color:var(--muted);margin-top:2px">' + status + '</div></div><div style="display:flex;gap:6px;align-items:center;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end">' + btns + '</div></div>';
 }
 
@@ -1821,7 +1846,7 @@ async function silentNotangka(id) {
 function naTodoCard(o) {
   const _lj = naLastJual(o);
   const sub = (o.wa ? o.wa + ' · ' : '') + (o.detail ? o.detail + ' · ' : '') + 'order ' + fmtDMY(o.tgl_order) + (_lj && Number(_lj.harga) ? ' · 💰 ' + fmtRp(_lj.harga) : ' · <span style="color:#b3402f">harga belum diisi</span>');
-  return '<div class="inv-entity" id="na-todo-' + o.id + '"><div style="min-width:0"><div class="inv-entity-title">' + o.nama + '</div><div class="inv-entity-sub">' + sub + '</div></div><div style="display:flex;gap:6px;align-items:center;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end"><button class="bayar-toggle" onclick="selesaiDikerjakan(' + o.id + ')">✓ Selesai</button><button class="btn-sm" onclick="editNotangka(' + o.id + ')">✏️</button><button class="btn-sm danger" onclick="hapusNotangka(' + o.id + ')">🗑</button></div></div>';
+  return '<div class="inv-entity" id="na-todo-' + o.id + '"><div style="min-width:0"><div class="inv-entity-title">' + o.nama + '</div><div class="inv-entity-sub">' + sub + '</div></div><div style="display:flex;gap:6px;align-items:center;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end"><button class="bayar-toggle" onclick="selesaiDikerjakan(' + o.id + ')">✓ Selesai</button>' + moreMenu([['✏️ Edit', 'editNotangka(' + o.id + ')'], ['🗑 Hapus', 'hapusNotangka(' + o.id + ')', true]]) + '</div></div>';
 }
 
 function selesaiDikerjakan(id) {
@@ -1860,9 +1885,9 @@ function naCard(o, iso, isDue) {
   let btns = '';
   if (isDue) {
     btns += '<button class="btn-sm" style="background:#25D366;color:#fff" onclick="waNotangka(' + o.id + ')">💬 WA</button>'
-      + '<button class="btn-sm" onclick="silentNotangka(' + o.id + ')" title="Stop follow-up, simpan kontak">🔕</button>';
+      ;
   }
-  btns += '<button class="btn-sm" onclick="editNotangka(' + o.id + ')">✏️</button><button class="btn-sm danger" onclick="hapusNotangka(' + o.id + ')">🗑</button>';
+  btns += moreMenu([isDue ? ['🔕 Silent (stop follow-up)', 'silentNotangka(' + o.id + ')'] : null, ['✏️ Edit', 'editNotangka(' + o.id + ')'], ['🗑 Hapus', 'hapusNotangka(' + o.id + ')', true]]);
   return '<div class="inv-entity"><div style="min-width:0"><div class="inv-entity-title">' + o.nama + '</div><div class="inv-entity-sub">' + sub + '</div><div style="font-size:11.5px;color:' + (isDue ? '#b3402f' : 'var(--muted)') + ';margin-top:2px">' + stepInfo + '</div></div><div style="display:flex;gap:6px;align-items:center;flex-shrink:0">' + btns + '</div></div>';
 }
 
@@ -2297,7 +2322,7 @@ const HARI_ID = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
 
 async function loadRekomAbsensi(tgl) {
   const el = document.getElementById('absensi-rekom'); if (!el) return;
-  el.innerHTML = '';
+  el.innerHTML = ''; ABS_TODAY = {}; ABS_SHOW_ALL = false;
   const base = tgl || todayISO();
   if (isNaN(new Date(base + 'T00:00:00').getTime())) return;
   let h; try { h = await weekdayHistory(base); } catch (e) { return; }
@@ -2305,6 +2330,8 @@ async function loadRekomAbsensi(tgl) {
   const list = Object.keys(h.map).map(function (k) { return { nama: inRoster(h.map[k].nama), cnt: h.map[k].cnt }; })
     .filter(function (x) { return x.nama; })
     .sort(function (a, b) { return b.cnt - a.cnt || a.nama.toLowerCase().localeCompare(b.nama.toLowerCase()); });
+  ABS_TODAY = {}; list.forEach(function (x) { ABS_TODAY[String(x.nama).toLowerCase()] = 1; });
+  try { filterAbsensi(); } catch (e) {}
   if (!list.length) { el.innerHTML = ''; return; }
   const hari = HARI_ID[new Date(base + 'T00:00:00').getDay()];
   el.innerHTML = '<div style="font-size:11px;font-weight:500;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin-bottom:6px">Rekomendasi (' + hari + ', 4 minggu terakhir) &middot; tap untuk tandai hadir</div>'
@@ -2518,14 +2545,30 @@ async function saveEditLastSubmit() {
   }
 }
 
+let ABS_TODAY = {}, ABS_SHOW_ALL = false;
 function filterAbsensi() {
   const q = (document.getElementById('absensi-search').value || '').toLowerCase().trim();
+  const adaToday = Object.keys(ABS_TODAY).length > 0;
+  let shown = 0, total = 0;
   document.querySelectorAll('#absensi-harian-list .ab-card').forEach(c => {
-    const n = c.getAttribute('data-search') || '';
-    c.style.display = (q && n.indexOf(q) >= 0) ? '' : 'none';
+    const n = c.getAttribute('data-search') || ''; total++;
+    const inp = c.querySelector('.absensi-inp[data-jenis="hadir"]'), sf = c.querySelector('.absensi-inp[data-jenis="sf"]');
+    const marked = (inp && Number(inp.value) > 0) || (sf && Number(sf.value) > 0);
+    let ok;
+    if (q) ok = n.indexOf(q) >= 0;
+    else ok = ABS_SHOW_ALL || ABS_TODAY[n] || marked;
+    c.style.display = ok ? '' : 'none'; if (ok) shown++;
   });
   const hint = document.getElementById('absensi-search-hint');
-  if (hint) hint.style.display = q ? 'none' : '';
+  if (hint) {
+    if (q) hint.style.display = 'none';
+    else {
+      hint.style.display = '';
+      const rest = total - shown;
+      hint.innerHTML = (adaToday ? '' : 'Ketik nama murid di kotak cari untuk menambah absensi. ')
+        + (rest > 0 || ABS_SHOW_ALL ? '<button type="button" class="abs-all-btn" onclick="ABS_SHOW_ALL=!ABS_SHOW_ALL;filterAbsensi()">' + (ABS_SHOW_ALL ? '▲ Sembunyikan murid lain' : '▼ Tampilkan murid lain (' + rest + ')') + '</button>' : '');
+    }
+  }
 }
 
 function updateMarkedList() {
@@ -3637,6 +3680,38 @@ async function simpanQuick() {
   finally { _qiSaving = false; }
 }
 
+
+// ── Menu ⋯ untuk aksi sekunder ──
+function moreMenu(items) {
+  return '<div class="more-wrap"><button type="button" class="btn-sm more-btn" onclick="event.stopPropagation();toggleMore(this)" title="Aksi lain">⋯</button><div class="more-menu">'
+    + items.filter(Boolean).map(function (it) { return '<button type="button" class="' + (it[2] ? 'danger' : '') + '" onclick="closeMores();' + it[1] + '">' + it[0] + '</button>'; }).join('') + '</div></div>';
+}
+function toggleMore(btn) { const m = btn.nextElementSibling; const open = m.classList.contains('open'); closeMores(); if (!open) m.classList.add('open'); }
+function closeMores() { document.querySelectorAll('.more-menu.open').forEach(function (m) { m.classList.remove('open'); }); }
+document.addEventListener('click', closeMores);
+
+
+// ── Section bisa dilipat (tap judul) ──
+const COLLAPSE_DEFAULT = ['Riwayat Absensi', 'Edit Absensi', 'Cek Absensi per Tanggal', 'Ringkasan Semua Bulan', 'Rincian per Bulan', 'Backup Data'];
+function sectionKey(sec) { const t = sec.querySelector('.section-title'); return t ? String(t.getAttribute('data-ck') || t.textContent).replace(/\s+\S+\s+\d{4}$/, '').trim() : ''; }
+function initCollapsible() {
+  document.querySelectorAll('main .section').forEach(function (sec) {
+    const head = sec.querySelector(':scope > .section-header'); if (!head || head.dataset.ck) return;
+    const t = sec.querySelector('.section-title'); if (t && !t.getAttribute('data-ck')) t.setAttribute('data-ck', t.textContent.trim());
+    const key = sectionKey(sec); if (!key) return;
+    head.dataset.ck = '1'; head.classList.add('ck-head');
+    const ar = document.createElement('span'); ar.className = 'ck-arrow'; ar.textContent = '▾'; (head.querySelector('.section-header-left') || head).appendChild(ar);
+    let st = null; try { st = localStorage.getItem('sppc_ck_' + key); } catch (e) {}
+    const col = st === null ? COLLAPSE_DEFAULT.some(function (d) { return key.indexOf(d) === 0; }) : st === '1';
+    sec.classList.toggle('collapsed', col);
+    head.addEventListener('click', function (e) {
+      if (e.target.closest('button,input,select,a,label,.date-wrap,.lap-month-nav')) return;
+      const c = !sec.classList.contains('collapsed'); sec.classList.toggle('collapsed', c);
+      try { localStorage.setItem('sppc_ck_' + key, c ? '1' : '0'); } catch (e2) {}
+    });
+  });
+}
+
 // ── Submit laporan ────────────────────────────────────
 async function submitLaporan() {
   const s = getSelected();
@@ -3850,9 +3925,8 @@ function renderStudentList() {
         <div class="link-badge" onclick="copyLink('${s.link_id}')">🔗 Salin link orang tua</div>
       </div>
       <div class="student-card-actions">
-        <button class="btn-sm" onclick="openEdit('${s.id}')">Edit</button>
-        <button class="btn-sm" onclick="setBerhenti('${s.id}', true)" title="Murid berhenti les (data & history tetap tersimpan)">⏸ Berhenti</button>
-        <button class="btn-sm danger" onclick="deleteStudent('${s.id}')">Hapus</button>
+        <button class="btn-sm" onclick="openEdit('${s.id}')">✏️ Edit</button>
+        ${moreMenu([['🔗 Salin link ortu', "copyLink('" + s.link_id + "')"], ['⏸ Berhenti les', "setBerhenti('" + s.id + "', true)"], ['🗑 Hapus', "deleteStudent('" + s.id + "')", true]])}
       </div>
     </div>
   `).join('') + (stopped.length ? `<details class="stopped-box"${q ? ' open' : ''}><summary>⏸ Murid berhenti (${stopped.length})</summary>` + stopped.filter(s => !q || s.nama.toLowerCase().indexOf(q) >= 0).map(s => `
@@ -3881,6 +3955,7 @@ updatePreview();
 _initGate();
 loadConfig();
 loadDurasi();
+initCollapsible();
 routeFromPath();
 // ── Backup otomatis: sekali per bulan saat dashboard dibuka ──
 function autoBackupBulanan() {
