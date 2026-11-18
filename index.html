@@ -631,6 +631,19 @@
   .act-box .a1{background:#e3f4ec}.act-box .a2{background:#e6ecfb}.act-box .a3{background:#fff1cc}.act-box .a4{background:#f1e8ff}
   .act-box b{display:block;font-size:15px;color:#2b0714}.act-box small{font-size:12px;color:#9a8f7c}
   @media (min-width:641px){ .act-sheet{align-items:center} .act-box{border-radius:24px} }
+  @media (max-width:640px){
+    #na-todo,#na-due,#na-list{display:grid;grid-template-columns:1fr 1fr;gap:8px;align-items:stretch}
+    #na-todo>:not(.inv-entity),#na-due>:not(.inv-entity),#na-list>:not(.inv-entity){grid-column:1/-1}
+    #na-todo .inv-entity,#na-due .inv-entity,#na-list .inv-entity{flex-direction:column;align-items:stretch;gap:8px;padding:11px;margin:0;min-width:0}
+    #na-todo .inv-entity>div:first-child,#na-due .inv-entity>div:first-child,#na-list .inv-entity>div:first-child{min-width:0}
+    #na-todo .inv-entity-title,#na-due .inv-entity-title,#na-list .inv-entity-title{font-size:14px;white-space:normal;word-break:break-word}
+    #na-todo .inv-entity-sub,#na-due .inv-entity-sub,#na-list .inv-entity-sub{font-size:11px;white-space:normal;word-break:break-word}
+    #na-todo .inv-entity>div:last-child,#na-due .inv-entity>div:last-child,#na-list .inv-entity>div:last-child{justify-content:space-between!important;flex-wrap:nowrap!important;margin-top:auto}
+    #na-todo .inv-entity .bayar-toggle,#na-due .inv-entity .btn-sm:first-child,#na-list .inv-entity .btn-sm:first-child{flex:1;font-size:12.5px;padding:7px 8px}
+    #na-todo .na-done-box{flex-direction:column;align-items:stretch}
+    #na-todo .na-done-box input{min-width:0}
+  }
+  @media (max-width:640px){ .more-menu{position:fixed;left:12px;right:12px;top:auto;bottom:calc(84px + env(safe-area-inset-bottom));min-width:0;box-shadow:0 -6px 30px rgba(0,0,0,.25);padding:8px} .more-menu button{padding:13px 14px;font-size:15px} }
 </style>
 </head>
 <body>
@@ -1026,7 +1039,7 @@
           <div class="field"><label>No. WhatsApp</label><input id="na-wa" type="tel" placeholder="cth. 08123456789"></div>
         </div>
         <div class="grid-2" style="margin-bottom:12px">
-          <div class="field"><label>Detail Pesanan</label><input id="na-detail" type="text" placeholder="cth. Not angka 'Bunga' 2 halaman"></div>
+          <input id="na-detail" type="hidden">
           <div class="field"><label>Harga Jasa (Rp)</label><input id="na-harga" type="number" inputmode="numeric" min="0" placeholder="cth. 50000"></div>
         </div>
         <div class="field" style="margin-bottom:12px"><label>Tanggal Order</label><span class="date-wrap" style="display:flex"><input type="text" id="na-tgl-disp" readonly onclick="openDatePicker('na-tgl')" placeholder="Pilih tanggal" style="cursor:pointer;background:#fff;font-size:14px;padding:9px 12px;border:1px solid var(--border);border-radius:8px;width:100%"><input type="date" id="na-tgl" class="date-hidden" onchange="syncDateDisplay('na-tgl')"></span></div>
@@ -1898,7 +1911,7 @@ function naListCard(o) {
   const nd = naNextDate(o);
   const status = o.dikerjakan ? '🛠 Sedang dikerjakan' : (o.silent ? '🔕 Silent · kontak disimpan' : (o.done ? '✓ Selesai' : ('Follow-up ' + (NA_OFFSETS[o.step || 0] ? NA_OFFSETS[o.step || 0].lbl : '') + (nd ? ' → ' + fmtDMY(naIso(nd)) : ''))));
   const _js = naJualOf(o.id); const _tot = _js.reduce(function (a, j) { return a + (Number(j.harga) || 0); }, 0);
-  const sub = (o.wa ? o.wa + ' · ' : '') + (o.detail ? o.detail + ' · ' : '') + 'order ' + fmtDMY(o.tgl_order) + (_tot ? ' · 💰 ' + fmtRp(_tot) : '');
+  const sub = [o.wa || '', _tot ? '💰 ' + fmtRp(_tot) : ''].filter(Boolean).join(' · ');
   const active = !o.done && !o.silent;
   const badge = naTierBadge(o);
   const btns = '<button class="btn-sm" onclick="reorderNotangka(' + o.id + ')" title="Order lagi">🔁 Order lagi</button>'
@@ -1926,7 +1939,7 @@ async function silentNotangka(id) {
 
 function naTodoCard(o) {
   const _lj = naLastJual(o);
-  const sub = (o.wa ? o.wa + ' · ' : '') + (o.detail ? o.detail + ' · ' : '') + 'order ' + fmtDMY(o.tgl_order) + (_lj && Number(_lj.harga) ? ' · 💰 ' + fmtRp(_lj.harga) : ' · <span style="color:#b3402f">harga belum diisi</span>');
+  const sub = [o.wa || '', _lj && Number(_lj.harga) ? '💰 ' + fmtRp(_lj.harga) : ''].filter(Boolean).join(' · ');
   return '<div class="inv-entity" id="na-todo-' + o.id + '"><div style="min-width:0"><div class="inv-entity-title">' + o.nama + '</div><div class="inv-entity-sub">' + sub + '</div></div><div style="display:flex;gap:6px;align-items:center;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end"><button class="bayar-toggle" onclick="selesaiDikerjakan(' + o.id + ')">✓ Selesai</button>' + moreMenu([['✏️ Edit', 'editNotangka(' + o.id + ')'], ['🗑 Hapus', 'hapusNotangka(' + o.id + ')', true]]) + '</div></div>';
 }
 
@@ -1961,7 +1974,7 @@ async function konfirmSelesai(id) {
 
 function naCard(o, iso, isDue) {
   const lbl = NA_OFFSETS[o.step || 0] ? NA_OFFSETS[o.step || 0].lbl : '';
-  const sub = (o.detail ? o.detail + ' · ' : '') + (o.tgl_selesai ? 'selesai ' + fmtDMY(o.tgl_selesai) : 'order ' + fmtDMY(o.tgl_order));
+  const sub = o.wa || '';
   const stepInfo = 'Follow-up ' + lbl + ' → ' + fmtDMY(iso);
   let btns = '';
   if (isDue) {
@@ -3658,6 +3671,8 @@ function qiRender() {
   const na = QI_KAT === 'notangka';
   document.getElementById('qi-na').style.display = na ? '' : 'none';
   document.getElementById('qi-lain').style.display = na ? 'none' : '';
+  document.getElementById('qi-ket-wrap').style.display = na ? 'none' : '';
+  document.querySelector('.qi-grid').style.gridTemplateColumns = na ? '1fr' : '';
   // customer terpilih
   const pick = document.getElementById('qi-cust-pick'), sel = document.getElementById('qi-cust-sel');
   if (QI_CUST || QI_NEW) {
@@ -3695,7 +3710,6 @@ function qiPickCust(id) {
   QI_CUST = QI_ORDERS.find(function (x) { return x.id === id; }); QI_NEW = false;
   QI_STATUS = qiOpenOrder(QI_CUST) ? 'selesai' : 'dikerjakan';
   document.getElementById('qi-cust-list').style.display = 'none';
-  const op = qiOpenOrder(QI_CUST); if (op && op.detail) document.getElementById('qi-ket').value = op.detail;
   qiRender(); setTimeout(function () { document.getElementById('qi-nom').focus(); }, 50);
 }
 function qiNewCust() {
@@ -3723,7 +3737,7 @@ let _qiSaving = false;
 async function simpanQuick() {
   if (_qiSaving) return;
   const tgl = document.getElementById('qi-tgl').value || todayISO();
-  const ket = document.getElementById('qi-ket').value.trim();
+  const ket = QI_KAT === 'notangka' ? '' : document.getElementById('qi-ket').value.trim();
   const nomTxt = document.getElementById('qi-nom').value.trim(), nom = qiAmount(nomTxt);
   if (nomTxt && !nom) { showToast('⚠ Nominal tidak terbaca, cth. 50000 / 50rb'); return; }
   const chk = function (r) { if (r && r.error) throw new Error(r.error.message); return r; };
@@ -3825,10 +3839,11 @@ async function loadHome() {
   } catch (e) { set('hm-les-sub', ''); }
   // belum bayar
   try {
-    const iv = (await sb.from('invoice').select('total,lunas,bulan').eq('lunas', false)).data || [];
+    const pv = new Date(d.getFullYear(), d.getMonth() - 1, 1); const pym = pv.getFullYear() + '-' + String(pv.getMonth() + 1).padStart(2, '0');
+    const iv = (await sb.from('invoice').select('total,lunas,bulan').eq('bulan', pym).eq('lunas', false)).data || [];
     const tot = iv.reduce(function (a, x) { return a + (Number(x.total) || 0); }, 0);
     set('hm-bayar-n', iv.length ? fmtRp(tot) : '✓ Lunas');
-    set('hm-bayar-s', iv.length ? iv.length + ' invoice belum lunas' : 'Semua invoice lunas');
+    set('hm-bayar-s', (iv.length ? iv.length + ' invoice belum lunas · ' : 'Semua lunas · ') + labelBulan(pym));
   } catch (e) {}
   // follow-up
   try {
@@ -4186,7 +4201,7 @@ document.querySelectorAll('.date-hidden').forEach(function (inp) { inp.addEventL
       <div class="qi-lbl">Klien</div><input id="qi-klien" type="text" placeholder="cth. GKI Kebayoran / Bu Rina">
     </div>
     <div class="qi-grid">
-      <div><div class="qi-lbl">Keterangan</div><input id="qi-ket" type="text" placeholder="cth. lagu Bunga"></div>
+      <div id="qi-ket-wrap"><div class="qi-lbl">Keterangan</div><input id="qi-ket" type="text" placeholder="cth. main piano pernikahan"></div>
       <div><div class="qi-lbl">Nominal (Rp)</div><input id="qi-nom" type="text" inputmode="numeric" placeholder="cth. 50000 / 50rb" onkeydown="if(event.key==='Enter'){event.preventDefault();simpanQuick();}"></div>
     </div>
     <div class="qi-row"><label>📅</label><input id="qi-tgl" type="date"><button class="qi-save" onclick="simpanQuick()">💾 Simpan</button></div>
