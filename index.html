@@ -644,6 +644,31 @@
     #na-todo .na-done-box input{min-width:0}
   }
   @media (max-width:640px){ .more-menu{position:fixed;left:12px;right:12px;top:auto;bottom:calc(84px + env(safe-area-inset-bottom));min-width:0;box-shadow:0 -6px 30px rgba(0,0,0,.25);padding:8px} .more-menu button{padding:13px 14px;font-size:15px} }
+  /* ── perbaikan layout HP ── */
+  .pm-mob{display:none}
+  .pm-card{background:#fff;border:1px solid #f0e8d8;border-radius:16px;padding:10px 12px;margin-bottom:8px}
+  .pm-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:14px}
+  .pm-h span{font-weight:800;color:#3f7d6a}
+  .pm-g{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:6px;font-size:13px;font-weight:700;color:#2b0714}
+  .pm-g small{display:block;font-size:10.5px;font-weight:600;color:var(--muted)}
+  .pm-g em{display:block;font-style:normal;font-size:10.5px;color:#b3402f;font-weight:600}
+  .pm-tot{background:#faf6ee}
+  @media (max-width:640px){
+    .pm-mob{display:block}.pm-desk{display:none}
+    .subtab-bar{overflow-x:hidden!important}
+    .subtab-btn{flex:1 1 0!important;min-width:0;white-space:normal!important;padding:9px 4px!important;font-size:12px!important;line-height:1.2;text-align:center}
+    .section-header{flex-wrap:wrap;gap:8px}
+    .section-header .date-wrap{max-width:100%}
+    .section-header .date-wrap input{min-width:0!important;max-width:150px}
+    #na-todo .inv-entity>div:last-child,#na-due .inv-entity>div:last-child,#na-list .inv-entity>div:last-child{gap:4px!important;min-width:0}
+    #na-todo .bayar-toggle,#na-due .btn-sm:first-child,#na-list .btn-sm:first-child{min-width:0!important;flex:1 1 auto;padding:7px 6px!important;font-size:12px!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    #na-todo .more-btn,#na-due .more-btn,#na-list .more-btn{min-width:32px;width:32px;padding:6px 0;flex:0 0 32px}
+    #na-todo .inv-entity,#na-due .inv-entity,#na-list .inv-entity{flex-wrap:nowrap!important;padding:10px!important}
+    #na-todo .inv-entity>div:last-child,#na-due .inv-entity>div:last-child,#na-list .inv-entity>div:last-child{width:100%}
+    #na-todo .more-wrap,#na-due .more-wrap,#na-list .more-wrap{flex:0 0 32px;width:32px}
+    #page-notangka .section{padding:12px 10px}
+    #na-todo,#na-due,#na-list{gap:6px!important}
+  }
 </style>
 </head>
 <body>
@@ -2859,7 +2884,11 @@ function renderPmTable() {
     T.t += t; T.l += l; T.n += n; T.j += j;
     return '<tr><td>' + labelBulan(k) + '</td><td class="num">' + (l ? fmtRp(l) : '—') + (t > l ? '<br><small style="color:#b3402f">belum ' + fmtRp(t - l) + '</small>' : '') + '</td><td class="num">' + (n ? fmtRp(n) : '—') + '</td><td class="num">' + (j ? fmtRp(j) : '—') + '</td><td class="num"><b>' + fmtRp(l + n + j) + '</b></td></tr>';
   }).join('');
-  el.innerHTML = '<div style="overflow-x:auto"><table class="na-rk-table"><thead><tr><th>Bulan</th><th class="num">Les</th><th class="num">Not angka</th><th class="num">Jasa lain</th><th class="num">Total masuk</th></tr></thead><tbody>' + rows
+  const sh = function (n) { return n >= 1e6 ? (Math.round(n / 1e5) / 10).toString().replace('.', ',') + ' jt' : (n >= 1e3 ? Math.round(n / 1e3) + ' rb' : (n ? String(n) : '—')); };
+  const mob = ks.map(function (k) { const r = by[k] || {}, t = Number(r.total) || 0, l = Number(r.total_lunas) || 0, n = NA_BULAN[k] || 0, j = LAIN_BULAN[k] || 0;
+    return '<div class="pm-card"><div class="pm-h"><b>' + labelBulan(k) + '</b><span>' + fmtRp(l + n + j) + '</span></div><div class="pm-g"><div><small>Les</small>' + sh(l) + (t > l ? '<em>belum ' + sh(t - l) + '</em>' : '') + '</div><div><small>Not angka</small>' + sh(n) + '</div><div><small>Jasa lain</small>' + sh(j) + '</div></div></div>'; }).join('')
+    + '<div class="pm-card pm-tot"><div class="pm-h"><b>Total ' + CHART_YEAR + '</b><span>' + fmtRp(T.l + T.n + T.j) + '</span></div><div class="pm-g"><div><small>Les</small>' + sh(T.l) + '</div><div><small>Not angka</small>' + sh(T.n) + '</div><div><small>Jasa lain</small>' + sh(T.j) + '</div></div></div>';
+  el.innerHTML = '<div class="pm-mob">' + mob + '</div><div class="pm-desk" style="overflow-x:auto"><table class="na-rk-table"><thead><tr><th>Bulan</th><th class="num">Les</th><th class="num">Not angka</th><th class="num">Jasa lain</th><th class="num">Total masuk</th></tr></thead><tbody>' + rows
     + '<tr style="background:#faf6ee"><td><b>Total ' + CHART_YEAR + '</b></td><td class="num"><b>' + fmtRp(T.l) + '</b></td><td class="num"><b>' + fmtRp(T.n) + '</b></td><td class="num"><b>' + fmtRp(T.j) + '</b></td><td class="num"><b>' + fmtRp(T.l + T.n + T.j) + '</b></td></tr></tbody></table></div>'
     + '<div style="font-size:11px;color:var(--muted);margin-top:6px">Les = invoice yang sudah lunas (per bulan les). Not angka & jasa = sesuai tanggal pemasukan.</div>';
 }
