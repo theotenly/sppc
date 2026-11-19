@@ -669,6 +669,24 @@
     #page-notangka .section{padding:12px 10px}
     #na-todo,#na-due,#na-list{gap:6px!important}
   }
+  .na-nm{display:flex;align-items:baseline;gap:5px;flex-wrap:wrap}
+  .na-w4{font-size:11.5px;font-weight:600;color:var(--muted)}
+  .na-due-tg{display:flex;align-items:center;gap:8px;width:100%;border:1px solid #f0e8d8;background:#fff;border-radius:14px;padding:12px 14px;font-size:14px;font-weight:700;color:#2b0714;cursor:pointer;font-family:inherit;margin-bottom:8px;grid-column:1/-1}
+  .na-due-tg b{background:#e3f4ec;color:#1f5a47;border-radius:999px;padding:2px 10px;font-size:13px}
+  .na-due-tg i{margin-left:auto;font-style:normal;color:var(--muted);transition:transform .2s;transform:rotate(-90deg)}
+  .na-due-tg.open i{transform:none}
+  .hm-orders{margin-top:16px}
+  .hm-sec-h{display:flex;align-items:center;gap:8px;font-weight:800;font-size:15px;color:#2b0714;margin:0 4px 8px}
+  .hm-sec-h b{background:#fff1cc;color:#7a4b00;border-radius:999px;padding:1px 10px;font-size:13px}
+  .hm-ord{display:flex;flex-wrap:wrap;align-items:center;gap:8px;background:#fff;border:1px solid #f0e6d4;border-radius:18px;padding:10px 12px;margin-bottom:8px}
+  .hm-ord-l{flex:1;min-width:0;font-size:15px;color:#2b0714}
+  .hm-ord-l small{color:#9a8f7c;font-weight:600;font-size:12px}
+  .hm-ord-p{font-size:12px;color:#3f7d6a;font-weight:700;margin-top:2px}
+  .hm-done{border:none;border-radius:999px;padding:9px 14px;font-weight:800;font-size:13px;cursor:pointer;font-family:inherit;background:#e3f4ec;color:#1f5a47;white-space:nowrap}
+  .hm-done-box{flex-basis:100%;display:flex;gap:6px;align-items:center}
+  .hm-done-box input{flex:1;min-width:0;padding:10px 12px;border:2px solid #ffd27a;border-radius:12px;font-size:16px;font-family:inherit}
+  .hm-done-box .hm-done{background:linear-gradient(135deg,#f3d58a,#C9A24D);color:#2b0714}
+  .hm-x{border:none;background:#f3eee4;border-radius:50%;width:34px;height:34px;cursor:pointer}
 </style>
 </head>
 <body>
@@ -713,6 +731,7 @@
     <div class="hm-card" onclick="showPage('bayar')"><div class="hm-card-h"><span class="hm-ic red">🧾</span><div><b>Belum bayar</b><small>Invoice</small></div><span class="hm-chev">›</span></div><div class="hm-card-n" id="hm-bayar-n">–</div><div class="hm-card-s" id="hm-bayar-s"></div></div>
     <div class="hm-card" onclick="showPage('notangka')"><div class="hm-card-h"><span class="hm-ic gold">🎼</span><div><b>Not Angka</b><small>Follow-up</small></div><span class="hm-chev">›</span></div><div class="hm-card-n" id="hm-fu-n">–</div><div class="hm-card-s" id="hm-fu-s"></div></div>
   </div>
+  <div class="hm-orders" id="hm-orders"></div>
   <div class="hm-quick">
     <button onclick="showPage('laporan')"><span class="q1">📝</span>Laporan</button>
     <button onclick="showPage('absensi')"><span class="q2">🗓️</span>Absensi</button>
@@ -725,7 +744,7 @@
   <button class="tab-btn" data-group="home" onclick="goHome()"><span class="gb-ic">🏠</span><span class="gb-lb">Beranda</span></button>
   <button class="tab-btn active" data-group="isi" onclick="showGroup('isi')"><span class="gb-ic">📝</span><span class="gb-lb">Isi Data</span></button>
   <button class="tab-btn gb-plus" data-group="plus" onclick="bukaPlusSheet()"><span class="gb-plus-c">＋</span></button>
-  <button class="tab-btn" data-group="uang" onclick="showGroup('uang')"><span class="gb-ic">💰</span><span class="gb-lb">Keuangan</span></button>
+  <button class="tab-btn" data-group="notangka" onclick="showPage('notangka')"><span class="gb-ic">🎼</span><span class="gb-lb">Not Angka</span></button>
   <button class="tab-btn" data-group="lainnya" onclick="bukaLainnya()"><span class="gb-ic">☰</span><span class="gb-lb">Lainnya</span></button>
 </div>
 <div class="act-sheet" id="plus-sheet" onclick="if(event.target===this)this.classList.remove('open')"><div class="act-box">
@@ -736,8 +755,8 @@
 </div></div>
 <div class="act-sheet" id="lainnya-sheet" onclick="if(event.target===this)this.classList.remove('open')"><div class="act-box">
   <div class="act-title">Lainnya</div>
+  <button onclick="tutupSheets();showGroup('uang')"><span class="a2">💰</span><div><b>Keuangan</b><small>Invoice, bayar, rekap, pemasukan</small></div></button>
   <button onclick="tutupSheets();showPage('murid')"><span class="a1">👥</span><div><b>Data Murid</b><small>Tambah, edit, grup, tarif</small></div></button>
-  <button onclick="tutupSheets();showPage('notangka')"><span class="a2">🎼</span><div><b>Not Angka</b><small>Order & follow-up</small></div></button>
   <button onclick="tutupSheets();showPage('pendapatan')"><span class="a3">💰</span><div><b>Pendapatan & Jasa</b><small>Kalender omzet, history</small></div></button>
   <button onclick="tutupSheets();showPage('setting')"><span class="a4">⚙️</span><div><b>Setting</b><small>Penagihan & backup</small></div></button>
 </div></div>
@@ -1875,7 +1894,9 @@ function renderNotangka() {
     if (naDuePage > dPages) naDuePage = dPages; if (naDuePage < 1) naDuePage = 1;
     const dSlice = dueList.slice((naDuePage - 1) * NA_DUE_PER, (naDuePage - 1) * NA_DUE_PER + NA_DUE_PER);
     const dPager = dPages > 1 ? ('<div style="display:flex;justify-content:center;gap:10px;margin-top:10px"><button class="btn-sm" ' + (naDuePage <= 1 ? 'disabled' : '') + ' onclick="naDueGoto(-1)">‹</button><span style="font-size:12px;color:var(--muted);align-self:center">Hal ' + naDuePage + '/' + dPages + '</span><button class="btn-sm" ' + (naDuePage >= dPages ? 'disabled' : '') + ' onclick="naDueGoto(1)">›</button></div>') : '';
-    due.innerHTML = '<div style="font-size:11px;font-weight:500;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Perlu follow-up (' + dueList.length + ')</div>' + dSlice.map(function (x) { return naCard(x.o, x.iso, true); }).join('') + dPager;
+    let _open = false; try { _open = localStorage.getItem('sppc_na_due_open') === '1'; } catch (e) {}
+    due.innerHTML = '<button type="button" class="na-due-tg' + (_open ? ' open' : '') + '" onclick="toggleNaDue()"><span>💬 Perlu follow-up</span><b>' + dueList.length + '</b><i>▾</i></button>'
+      + (_open ? dSlice.map(function (x) { return naCard(x.o, x.iso, true); }).join('') + dPager : '');
   } else {
     due.innerHTML = '<div class="empty" style="padding:1rem;text-align:center;color:var(--muted);font-size:13px">Tidak ada follow-up jatuh tempo. 🎉</div>';
   }
@@ -1887,6 +1908,7 @@ let naLetter = 'ALL', naPage = 1; const NA_PER = 10;
 let naDuePage = 1; const NA_DUE_PER = 10;
 function naSetLetter(L) { naLetter = L; naPage = 1; renderNaList(); }
 function naGoto(d) { naPage += d; renderNaList(); }
+function toggleNaDue() { let o = false; try { o = localStorage.getItem('sppc_na_due_open') === '1'; localStorage.setItem('sppc_na_due_open', o ? '0' : '1'); } catch (e) {} renderNotangka(); }
 function naDueGoto(d) { naDuePage += d; renderNotangka(); }
 
 function renderNaList() {
@@ -1941,7 +1963,8 @@ function naListCard(o) {
   const badge = naTierBadge(o);
   const btns = '<button class="btn-sm" onclick="reorderNotangka(' + o.id + ')" title="Order lagi">🔁 Order lagi</button>'
     + moreMenu([[(o.priority ? '☆ Lepas priority' : '⭐ Jadikan priority'), 'togglePriority(' + o.id + ')'], active ? ['🔕 Silent (stop follow-up)', 'silentNotangka(' + o.id + ')'] : null, ['✏️ Edit', 'editNotangka(' + o.id + ')'], ['🗑 Hapus', 'hapusNotangka(' + o.id + ')', true]]);
-  return '<div class="inv-entity"><div style="min-width:0"><div class="inv-entity-title">' + o.nama + badge + '</div><div class="inv-entity-sub">' + sub + '</div><div style="font-size:11.5px;color:var(--muted);margin-top:2px">' + status + '</div></div><div style="display:flex;gap:6px;align-items:center;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end">' + btns + '</div></div>';
+  const sub2 = _tot ? '💰 ' + fmtRp(_tot) : '';
+  return '<div class="inv-entity"><div style="min-width:0">' + naNamaWa(o, badge) + (sub2 ? '<div class="inv-entity-sub">' + sub2 + '</div>' : '') + '<div style="font-size:11.5px;color:var(--muted);margin-top:2px">' + status + '</div></div><div style="display:flex;gap:6px;align-items:center;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end">' + btns + '</div></div>';
 }
 
 async function reorderNotangka(id) {
@@ -1962,10 +1985,13 @@ async function silentNotangka(id) {
   catch (e) { showToast('⚠ Gagal: ' + e.message); }
 }
 
+function naWa4(o) { const d = String(o.wa || '').replace(/[^0-9]/g, ''); return d ? d.slice(-4) : ''; }
+function naNamaWa(o, extra) { const w = naWa4(o); return '<div class="inv-entity-title na-nm">' + o.nama + (w ? ' <span class="na-w4">·' + w + '</span>' : '') + (extra || '') + '</div>'; }
 function naTodoCard(o) {
   const _lj = naLastJual(o);
   const sub = [o.wa || '', _lj && Number(_lj.harga) ? '💰 ' + fmtRp(_lj.harga) : ''].filter(Boolean).join(' · ');
-  return '<div class="inv-entity" id="na-todo-' + o.id + '"><div style="min-width:0"><div class="inv-entity-title">' + o.nama + '</div><div class="inv-entity-sub">' + sub + '</div></div><div style="display:flex;gap:6px;align-items:center;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end"><button class="bayar-toggle" onclick="selesaiDikerjakan(' + o.id + ')">✓ Selesai</button>' + moreMenu([['✏️ Edit', 'editNotangka(' + o.id + ')'], ['🗑 Hapus', 'hapusNotangka(' + o.id + ')', true]]) + '</div></div>';
+  const sub2 = _lj && Number(_lj.harga) ? '💰 ' + fmtRp(_lj.harga) : '';
+  return '<div class="inv-entity" id="na-todo-' + o.id + '"><div style="min-width:0">' + naNamaWa(o) + (sub2 ? '<div class="inv-entity-sub">' + sub2 + '</div>' : '') + '</div><div style="display:flex;gap:6px;align-items:center;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end"><button class="bayar-toggle" onclick="selesaiDikerjakan(' + o.id + ')">✓ Selesai</button>' + moreMenu([['✏️ Edit', 'editNotangka(' + o.id + ')'], ['🗑 Hapus', 'hapusNotangka(' + o.id + ')', true]]) + '</div></div>';
 }
 
 function selesaiDikerjakan(id) {
@@ -2000,14 +2026,14 @@ async function konfirmSelesai(id) {
 function naCard(o, iso, isDue) {
   const lbl = NA_OFFSETS[o.step || 0] ? NA_OFFSETS[o.step || 0].lbl : '';
   const sub = o.wa || '';
-  const stepInfo = 'Follow-up ' + lbl + ' → ' + fmtDMY(iso);
+  const stepInfo = '📅 ' + lbl + ' · ' + fmtDMY(iso).replace(/\s\d{4}$/, '');
   let btns = '';
   if (isDue) {
     btns += '<button class="btn-sm" style="background:#25D366;color:#fff" onclick="waNotangka(' + o.id + ')">💬 WA</button>'
       ;
   }
   btns += moreMenu([isDue ? ['🔕 Silent (stop follow-up)', 'silentNotangka(' + o.id + ')'] : null, ['✏️ Edit', 'editNotangka(' + o.id + ')'], ['🗑 Hapus', 'hapusNotangka(' + o.id + ')', true]]);
-  return '<div class="inv-entity"><div style="min-width:0"><div class="inv-entity-title">' + o.nama + '</div><div class="inv-entity-sub">' + sub + '</div><div style="font-size:11.5px;color:' + (isDue ? '#b3402f' : 'var(--muted)') + ';margin-top:2px">' + stepInfo + '</div></div><div style="display:flex;gap:6px;align-items:center;flex-shrink:0">' + btns + '</div></div>';
+  return '<div class="inv-entity"><div style="min-width:0">' + naNamaWa(o) + '<div style="font-size:11.5px;color:' + (isDue ? '#b3402f' : 'var(--muted)') + ';margin-top:2px">' + stepInfo + '</div></div><div style="display:flex;gap:6px;align-items:center;flex-shrink:0">' + btns + '</div></div>';
 }
 
 async function saveNotangka() {
@@ -2176,7 +2202,7 @@ function showPage(name) {
       void pg.offsetWidth; pg.classList.add(dir);
     }
   }
-  { const nk = (group === 'murid' || group === 'notangka') ? 'lainnya' : group; document.querySelectorAll('#group-bar .tab-btn').forEach(b => b.classList.toggle('active', b.getAttribute('data-group') === nk)); }
+  { const nk = (group === 'murid' || group === 'uang') ? 'lainnya' : group; document.querySelectorAll('#group-bar .tab-btn').forEach(b => b.classList.toggle('active', b.getAttribute('data-group') === nk)); }
   buildSubtabs(group, name);
   if (name === 'murid') renderStudentList();
   if (name === 'laporan') loadLapToday();
@@ -3874,6 +3900,8 @@ async function loadHome() {
     set('hm-bayar-n', iv.length ? fmtRp(tot) : '✓ Lunas');
     set('hm-bayar-s', (iv.length ? iv.length + ' invoice belum lunas · ' : 'Semua lunas · ') + labelBulan(pym));
   } catch (e) {}
+  // pesanan berjalan
+  try { renderHmOrders(); } catch (e) {}
   // follow-up
   try {
     const na = (await sb.from('notangka_order').select('tgl_order,tgl_selesai,step,done,silent,dikerjakan')).data || [];
@@ -3882,6 +3910,54 @@ async function loadHome() {
     set('hm-fu-n', due + ' <small>follow-up</small>');
     set('hm-fu-s', kerja ? '🛠 ' + kerja + ' perlu dikerjakan' : 'Tidak ada yang dikerjakan');
   } catch (e) {}
+}
+
+
+// ── Beranda: pesanan not angka yang masih berjalan ──
+let HM_ORD = [], HM_JUAL = [];
+async function renderHmOrders() {
+  const el = document.getElementById('hm-orders'); if (!el) return;
+  try {
+    HM_ORD = ((await sb.from('notangka_order').select('*').eq('dikerjakan', true)).data || []).filter(function (o) { return !o.done; }).sort(function (a, b) { return String(a.tgl_order).localeCompare(String(b.tgl_order)); });
+    const ids = HM_ORD.map(function (o) { return o.id; });
+    HM_JUAL = ids.length ? ((await sb.from('notangka_penjualan').select('id,order_id,harga,tanggal').in('order_id', ids)).data || []) : [];
+  } catch (e) { HM_ORD = []; }
+  if (!HM_ORD.length) { el.innerHTML = ''; return; }
+  el.innerHTML = '<div class="hm-sec-h"><span>🛠 Pesanan berjalan</span><b>' + HM_ORD.length + '</b></div>'
+    + HM_ORD.map(function (o) {
+      const j = HM_JUAL.filter(function (x) { return x.order_id === o.id && String(x.tanggal) >= String(o.tgl_order); }).pop();
+      const w = naWa4(o);
+      return '<div class="hm-ord" id="hm-o-' + o.id + '"><div class="hm-ord-l"><b>' + lapEsc(o.nama) + '</b>' + (w ? ' <small>·' + w + '</small>' : '') + (j && Number(j.harga) ? '<div class="hm-ord-p">💰 ' + fmtRp(j.harga) + '</div>' : '') + '</div>'
+        + '<button class="hm-done" onclick="hmSelesai(' + o.id + ')">✓ Selesai</button></div>';
+    }).join('');
+}
+function hmSelesai(id) {
+  const row = document.getElementById('hm-o-' + id); if (!row || row.querySelector('.hm-done-box')) return;
+  const o = HM_ORD.find(function (x) { return x.id === id; });
+  const j = HM_JUAL.filter(function (x) { return x.order_id === id && String(x.tanggal) >= String(o.tgl_order); }).pop();
+  const box = document.createElement('div'); box.className = 'hm-done-box';
+  box.innerHTML = '<input type="text" inputmode="numeric" placeholder="Harga, cth. 50000 / 50rb" value="' + (j && Number(j.harga) ? Number(j.harga) : '') + '" onkeydown="if(event.key===\'Enter\')hmKonfirm(' + id + ')"><button class="hm-done" onclick="hmKonfirm(' + id + ')">Simpan</button><button class="hm-x" onclick="this.parentElement.remove()">✕</button>';
+  row.appendChild(box); setTimeout(function () { box.querySelector('input').focus(); }, 50);
+}
+async function hmKonfirm(id) {
+  const o = HM_ORD.find(function (x) { return x.id === id; }); if (!o) return;
+  const row = document.getElementById('hm-o-' + id); const inp = row ? row.querySelector('.hm-done-box input') : null;
+  const txt = inp ? inp.value.trim() : ''; const harga = qiAmount(txt);
+  if (txt && !harga) { showToast('⚠ Nominal tidak terbaca'); return; }
+  if (!harga && !confirm('Harga belum diisi. Tetap tandai selesai?')) return;
+  const tgl = todayISO();
+  try {
+    const r = await sb.from('notangka_order').update({ dikerjakan: false, tgl_selesai: tgl, step: 0 }).eq('id', id);
+    if (r.error) throw new Error(r.error.message);
+    if (harga) {
+      const ex = HM_JUAL.filter(function (x) { return x.order_id === id && String(x.tanggal) >= String(o.tgl_order); }).pop();
+      const r2 = ex ? await sb.from('notangka_penjualan').update({ harga: harga, tanggal: tgl }).eq('id', ex.id)
+                    : await sb.from('notangka_penjualan').insert({ order_id: id, nama: o.nama, tanggal: tgl, detail: o.detail || '', harga: harga, kategori: 'notangka' });
+      if (r2.error) throw new Error(r2.error.message);
+    }
+    showToast('✓ ' + o.nama + ' selesai' + (harga ? ' · ' + fmtRp(harga) : '') + ' · follow-up dimulai');
+    loadHome();
+  } catch (e) { showToast('⚠ Gagal: ' + e.message); }
 }
 
 // ── Submit laporan ────────────────────────────────────
