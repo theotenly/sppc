@@ -1824,7 +1824,7 @@ function renderPdHistory() {
     const rk = j.detail === NA_RK && !j.order_id;
     const judul = rk ? 'Total not angka ' + labelBulan(String(j.tanggal).slice(0, 7)) : (j.nama || '—');
     const sub = (PD_JENIS[pdKat(j)] || pdKat(j)) + ' · ' + (rk ? 'input manual' : fmtDMY(String(j.tanggal).slice(0, 10))) + (!rk && j.detail ? ' · ' + lapEsc(j.detail) : '') + (j.order_id ? ' · dari order' : '');
-    const act = j.order_id ? '<button class="btn-sm" title="Ubah lewat Edit order" onclick="showPage(\'notangka\');setTimeout(function(){editNotangka(' + j.order_id + ')},300)">✏️</button>'
+    const act = j.order_id ? '<button class="btn-sm" title="Ubah lewat Edit order" onclick="showPage(\'notangka\');setTimeout(function(){editNotangka(' + j.order_id + ')},300)">✏️</button><button class="btn-sm danger" title="Hapus catatan harga ini" onclick="hapusPemasukan(' + j.id + ', true)">🗑</button>'
       : '<button class="btn-sm" onclick="editPemasukan(' + j.id + ')">✏️</button><button class="btn-sm danger" onclick="hapusPemasukan(' + j.id + ')">🗑</button>';
     const ic = { notangka: '🎼', pelayanan: '🙏', website: '💻', lainnya: '✨' }[pdKat(j)] || '💰';
     return '<div class="pd-item k-' + pdKat(j) + '"><div class="pd-ic">' + (rk ? '🗓️' : ic) + '</div><div class="pd-body"><div class="pd-t">' + lapEsc(judul) + '</div><div class="pd-s">' + sub + '</div></div><div class="pd-amt">' + fmtRp(j.harga) + '</div><div class="pd-act">' + act + '</div></div>';
@@ -1866,8 +1866,10 @@ async function simpanPemasukan() {
   showToast('✓ Tersimpan · ' + fmtRp(jml));
   batalEditPd(); loadPendapatan();
 }
-async function hapusPemasukan(id) {
-  if (!confirm('Hapus pemasukan ini?')) return;
+async function hapusPemasukan(id, dariOrder) {
+  const j = naJual.find(function (x) { return x.id === id; });
+  const info = j ? '\n\n' + (j.nama || '') + ' · ' + fmtRp(j.harga) + ' · ' + fmtDMY(String(j.tanggal).slice(0, 10)) : '';
+  if (!confirm((dariOrder ? 'Hapus catatan harga ini dari History Jasa?' + info + '\n\n(Data customer & order-nya tetap ada, hanya pemasukannya yang dihapus.)' : 'Hapus pemasukan ini?' + info))) return;
   const r = await sb.from('notangka_penjualan').delete().eq('id', id);
   if (r.error) { showToast('⚠ Gagal: ' + r.error.message); return; }
   showToast('✓ Dihapus'); loadPendapatan();
@@ -3778,7 +3780,7 @@ async function renderQiRecent() {
   try {
     const r = await sb.from('notangka_penjualan').select('id,nama,harga,tanggal,kategori,detail,order_id').order('id', { ascending: false }).limit(4);
     const rows = (r.data || []).filter(function (j) { return j.detail !== '__rekap_bulanan__'; });
-    if (rows.length) el.innerHTML = '<div class="qi-rt">Terakhir dicatat</div>' + rows.map(function (j) { return '<div class="qi-ri"><span>' + ({ notangka: '🎼', pelayanan: '🙏', website: '💻', lainnya: '✨' }[j.kategori || 'notangka'] || '💰') + ' ' + lapEsc(j.nama || '—') + ' <small>' + fmtDMY(String(j.tanggal).slice(0, 10)) + '</small></span><b>' + fmtRp(j.harga) + '</b>' + (!j.order_id ? '<button title="Hapus" onclick="hapusQi(' + j.id + ')">🗑</button>' : '') + '</div>'; }).join('');
+    if (rows.length) el.innerHTML = '<div class="qi-rt">Terakhir dicatat</div>' + rows.map(function (j) { return '<div class="qi-ri"><span>' + ({ notangka: '🎼', pelayanan: '🙏', website: '💻', lainnya: '✨' }[j.kategori || 'notangka'] || '💰') + ' ' + lapEsc(j.nama || '—') + ' <small>' + fmtDMY(String(j.tanggal).slice(0, 10)) + '</small></span><b>' + fmtRp(j.harga) + '</b>' + '<button title="Hapus" onclick="hapusQi(' + j.id + ')">🗑</button></div>'; }).join('');
   } catch (e) {}
 }
 async function hapusQi(id) {
