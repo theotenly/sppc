@@ -859,6 +859,26 @@
   .act-box .hm-pop-save{display:block;width:100%;text-align:center;background:#fff;color:#4a0d1a;border:2px solid #e8d3a6;padding:13px;border-radius:16px;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit}
   .act-box .hm-pop-save:hover{background:#fff8e6}
   .hm-pop-note{font-size:11px;color:#9a8f7c;text-align:center;margin-top:8px}
+  .ab-add-row{display:flex;gap:4px}
+  .ab-add-row .ab-add{flex:1}
+  .ab-cat{font-size:11px;color:#1e3a8a;background:#eef4ff;border-radius:8px;padding:4px 6px;margin-top:4px;line-height:1.35}
+  .cat-box textarea,.cat-box input{width:100%;font-size:16px!important;padding:10px 12px;border:1px solid var(--border);border-radius:12px;font-family:inherit}
+  .cat-chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
+  .act-box .cat-chips button{display:inline-flex;width:auto;padding:5px 10px;border:1px solid #c9dbff;background:#eef4ff;color:#1e3a8a;border-radius:999px;font-size:12px;font-weight:600}
+  .act-box.cat-box .qi-save{display:block;text-align:center;background:#3f7d6a;color:#fff;padding:12px;border-radius:12px;font-weight:800}
+  .inv-cat{margin-top:6px;display:flex;flex-direction:column;gap:4px}
+  .ic-row{display:flex;align-items:flex-start;gap:6px;background:#eef4ff;border:1px solid #d6e4ff;border-radius:10px;padding:5px 8px;font-size:12px;color:#1e3a8a;line-height:1.4}
+  .ic-row button{border:none;background:none;cursor:pointer;font-size:14px;color:#1e3a8a;padding:0 2px;flex-shrink:0}
+  .ic-row span{flex:1;min-width:0;word-break:break-word}
+  .ic-row.done{background:#f1f5f2;border-color:#d8e9de;color:#6b7a70;text-decoration:line-through}
+  .ic-row.done button{color:#1a7a4a;text-decoration:none}
+  .ic-row .ic-del{color:#a3261e;font-size:12px}
+  .inv-rate{display:inline-flex;align-items:center;gap:2px;font-size:12px;color:var(--muted)}
+  .inv-rate input{width:84px!important;padding:4px 6px!important;font-size:13px!important}
+  .inv-ldel{border:none;background:none;color:#a3261e;cursor:pointer;font-size:12px;padding:0 4px}
+  #inv-detail .inv-line{grid-template-columns:minmax(0,1fr) auto auto auto 18px}
+  #inv-detail .inv-line[style*="border:none"]{grid-template-columns:minmax(0,1fr) auto auto auto}
+  @media (max-width:480px){ #inv-detail .inv-line{grid-template-columns:52px minmax(0,1fr) auto 18px} #inv-detail .inv-line>span:first-child{grid-column:1/-1} #inv-detail .inv-line .amt{min-width:0} .inv-rate input{width:70px!important} }
 </style>
 </head>
 <body>
@@ -925,6 +945,7 @@
   <button onclick="tutupSheets();showPage('laporan')"><span class="a1">📝</span><div><b>Isi laporan</b><small>Catatan les hari ini</small></div></button>
   <button onclick="tutupSheets();showPage('absensi')"><span class="a2">✓</span><div><b>Absensi</b><small>Tandai murid hadir</small></div></button>
   <button onclick="tutupSheets();bukaQuickIncome()"><span class="a3">🎼</span><div><b>Pesanan / Pemasukan</b><small>Not angka, pelayanan, website</small></div></button>
+  <button onclick="tutupSheets();bukaCatatan('')"><span class="a4">📝</span><div><b>Catatan tagihan</b><small>Transport tambahan, ganti durasi, dll</small></div></button>
 </div></div>
 <div class="act-sheet" id="lainnya-sheet" onclick="if(event.target===this)this.classList.remove('open')"><div class="act-box">
   <div class="act-title">Lainnya</div>
@@ -2623,7 +2644,7 @@ async function loadAbsensiHarian() {
         <button type="button" onclick="stepAbsensi('${nm}','sf',1)">+</button>
       </div>
       <div class="ab-extra" data-nama="${nama}"></div>
-      <button type="button" class="ab-add" onclick="bukaBiaya('${nm}')">＋ Biaya tambahan</button>
+      <div class="ab-add-row"><button type="button" class="ab-add" onclick="bukaBiaya('${nm}')">＋ Biaya</button><button type="button" class="ab-add" onclick="bukaCatatan('${nm}')">📝 Catatan</button></div>
     </div>`;
   }).join('');
   filterAbsensi();
@@ -2631,6 +2652,78 @@ async function loadAbsensiHarian() {
   loadRekomAbsensi(tgl);
 }
 
+
+
+// ══ Catatan tagihan (universal) — dibaca saat rekap/invoice akhir bulan ══
+let CAT_FOR = '';
+function bukaCatatan(nama) {
+  CAT_FOR = nama || '';
+  let sh = document.getElementById('cat-sheet');
+  if (!sh) { sh = document.createElement('div'); sh.id = 'cat-sheet'; sh.className = 'act-sheet'; sh.onclick = function (e) { if (e.target === sh) sh.classList.remove('open'); }; document.body.appendChild(sh); }
+  const tglDef = (document.getElementById('absensi-tgl') && curPageName === 'absensi' && document.getElementById('absensi-tgl').value) || todayISO();
+  const opts = students.filter(function (s) { return !s.berhenti; }).map(function (s) { return '<option value="' + String(s.nama).replace(/"/g, '&quot;') + '">'; }).join('');
+  sh.innerHTML = '<div class="act-box cat-box"><div class="act-title">📝 Catatan tagihan</div>'
+    + '<div class="qi-lbl">Murid / grup</div><input type="text" id="cat-nama" list="cat-list" value="' + String(CAT_FOR).replace(/"/g, '&quot;') + '" placeholder="Ketik nama murid"><datalist id="cat-list">' + opts + '</datalist>'
+    + '<div class="qi-lbl">Tanggal</div><input type="date" id="cat-tgl" value="' + tglDef + '">'
+    + '<div class="qi-lbl">Catatan</div><textarea id="cat-isi" rows="3" placeholder="cth. Tambah transport 20rb (les di rumah nenek)&#10;Mulai hari ini durasi 45 menit, tarif 180rb"></textarea>'
+    + '<div class="cat-chips">' + ['+ Transport ', 'Ganti durasi ', 'Ganti tarif ', 'Les pengganti ', 'Libur / tidak ditagih '].map(function (t) { return '<button type="button" onclick="const a=document.getElementById(\'cat-isi\');a.value=(a.value?a.value+\' \':\'\')+\'' + t + '\';a.focus()">' + t.trim() + '</button>'; }).join('') + '</div>'
+    + '<div style="display:flex;gap:8px;margin-top:12px"><button class="qi-save" style="flex:1" onclick="simpanCatatan()">💾 Simpan catatan</button><button class="btn-sm" onclick="document.getElementById(\'cat-sheet\').classList.remove(\'open\')">Batal</button></div></div>';
+  sh.classList.add('open');
+  setTimeout(function () { const el = document.getElementById(CAT_FOR ? 'cat-isi' : 'cat-nama'); if (el) el.focus(); }, 80);
+}
+async function simpanCatatan() {
+  const nama = document.getElementById('cat-nama').value.trim(), isi = document.getElementById('cat-isi').value.trim(), tgl = document.getElementById('cat-tgl').value || todayISO();
+  if (!nama) { showToast('⚠ Isi nama murid'); return; }
+  if (!isi) { showToast('⚠ Tulis catatannya'); return; }
+  const r = await sb.from('catatan_tagihan').insert({ tanggal: tgl, nama: nama, isi: isi });
+  if (r.error) { showToast('⚠ Gagal: ' + r.error.message); return; }
+  document.getElementById('cat-sheet').classList.remove('open');
+  showToast('📝 Catatan untuk ' + nama + ' disimpan');
+  if (curPageName === 'absensi') loadCatatanTanggal(tgl);
+  if (curPageName === 'invoice') loadInvBuat();
+}
+async function loadCatatanTanggal(tgl) {
+  document.querySelectorAll('.ab-cat').forEach(function (e) { e.remove(); });
+  let rows = []; try { rows = (await sb.from('catatan_tagihan').select('*').eq('tanggal', tgl)).data || []; } catch (e) {}
+  rows.forEach(function (c) {
+    const box = Array.prototype.find.call(document.querySelectorAll('.ab-extra'), function (b) { return String(b.getAttribute('data-nama')).toLowerCase() === String(c.nama).toLowerCase(); });
+    if (!box) return;
+    const d = document.createElement('div'); d.className = 'ab-cat'; d.innerHTML = '📝 ' + lapEsc(c.isi);
+    box.parentElement.insertBefore(d, box.nextSibling);
+    const card = box.closest('.ab-card'); if (card) card.style.display = '';
+  });
+}
+let INV_CAT = {};
+async function loadInvCatatan(ym) {
+  INV_CAT = {};
+  const y = +ym.slice(0, 4), mo = +ym.slice(5, 7); const next = (mo === 12 ? (y + 1) + '-01' : y + '-' + String(mo + 1).padStart(2, '0')) + '-01';
+  try { ((await sb.from('catatan_tagihan').select('*').gte('tanggal', ym + '-01').lt('tanggal', next).order('tanggal')).data || []).forEach(function (c) { const k = String(c.nama).trim().toLowerCase(); (INV_CAT[k] = INV_CAT[k] || []).push(c); }); } catch (e) {}
+}
+function catOfEntity(en) {
+  const keys = [String(en.title).trim().toLowerCase()].concat(en.members.map(function (m) { return String(m.nama).trim().toLowerCase(); }));
+  const out = [], seen = {}; keys.forEach(function (k) { (INV_CAT[k] || []).forEach(function (c) { if (!seen[c.id]) { seen[c.id] = 1; out.push(c); } }); });
+  return out.sort(function (a, b) { return String(a.tanggal).localeCompare(String(b.tanggal)); });
+}
+function catHTML(list, compact) {
+  if (!list.length) return '';
+  return '<div class="inv-cat">' + list.map(function (c) {
+    const d = new Date(String(c.tanggal).slice(0, 10) + 'T00:00:00');
+    return '<div class="ic-row' + (c.selesai ? ' done' : '') + '"><button title="Tandai sudah diproses" onclick="event.stopPropagation();toggleCatatan(' + c.id + ',' + (!c.selesai) + ')">' + (c.selesai ? '✓' : '○') + '</button><span><b>' + d.getDate() + '/' + (d.getMonth() + 1) + '</b> ' + lapEsc(c.nama) + ': ' + lapEsc(c.isi) + '</span>' + (compact ? '' : '<button class="ic-del" title="Hapus" onclick="event.stopPropagation();hapusCatatan(' + c.id + ')">✕</button>') + '</div>';
+  }).join('') + '</div>';
+}
+async function toggleCatatan(id, val) {
+  const r = await sb.from('catatan_tagihan').update({ selesai: !!val }).eq('id', id); if (r.error) { showToast('⚠ ' + r.error.message); return; }
+  Object.keys(INV_CAT).forEach(function (k) { INV_CAT[k].forEach(function (c) { if (c.id === id) c.selesai = !!val; }); });
+  if (document.getElementById('inv-overlay').classList.contains('open')) renderInvDetail();
+  const q = (document.getElementById('inv-buat-search') || {}).value || ''; loadInvBuat().then(function () { const si = document.getElementById('inv-buat-search'); if (si && q) { si.value = q; filterInvBuat(); } });
+}
+async function hapusCatatan(id) {
+  if (!confirm('Hapus catatan ini?')) return;
+  const r = await sb.from('catatan_tagihan').delete().eq('id', id); if (r.error) { showToast('⚠ ' + r.error.message); return; }
+  Object.keys(INV_CAT).forEach(function (k) { INV_CAT[k] = INV_CAT[k].filter(function (c) { return c.id !== id; }); });
+  if (document.getElementById('inv-overlay').classList.contains('open')) renderInvDetail();
+  loadInvBuat();
+}
 
 // ── Absensi: mode (offline/online/trial) & biaya tambahan per tanggal ──
 function setAbMode(nama, mode) {
@@ -2717,7 +2810,7 @@ async function loadRekomAbsensi(tgl) {
   const el = document.getElementById('absensi-rekom'); if (!el) return;
   el.innerHTML = ''; ABS_TODAY = {}; ABS_SHOW_ALL = false;
   const base = tgl || todayISO();
-  try { loadExtraTanggal(base); } catch (e) {}
+  try { loadExtraTanggal(base).then(function () { loadCatatanTanggal(base); }); } catch (e) {}
   if (isNaN(new Date(base + 'T00:00:00').getTime())) return;
   let h; try { h = await weekdayHistory(base); } catch (e) { return; }
   const inRoster = function (n) { return absensiRoster.find(function (r) { return r.toLowerCase() === String(n).toLowerCase(); }); };
@@ -3346,6 +3439,7 @@ async function _loadInvBuat() {
   catch (e) { el.innerHTML = '<div class="empty">Gagal: ' + e.message + '</div>'; return; }
   invEntities = (data && data.entities) || [];
   await loadInvTanggal(invBulan());
+  await loadInvCatatan(invBulan());
   if (!invEntities.length) { el.innerHTML = '<div class="empty" style="padding:1.25rem;text-align:center;color:var(--muted);font-size:13px">Belum ada aktivitas les/absensi bulan ini.</div>'; return; }
   const _head = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:8px;flex-wrap:wrap"><span style="font-size:12px;color:var(--muted)">' + invEntities.length + ' tagihan · ' + labelBulan(invBulan()) + '</span><span style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn-sm" style="background:#25D366;color:#fff" onclick="kirimWASemua()">💬 WA Semua</button><button class="btn-sm primary" id="inv-buatsemua-btn" onclick="buatInvoiceSemua()">🧾 Buat / Perbarui Semua</button></span></div>';
   const _search = '<input type="text" id="inv-buat-search" placeholder="🔍 Cari nama murid / grup..." oninput="filterInvBuat()" autocomplete="off" style="width:100%;font-size:14px;padding:9px 12px;margin-bottom:10px">';
@@ -3353,9 +3447,11 @@ async function _loadInvBuat() {
   const _banner = (_nBeda ? '<div class="inv-beda-banner">⚠ ' + _nBeda + ' murid jumlah <b>laporan & absensi beda</b> — otomatis pakai <b>gabungan</b> (absensi + tanggal laporan yang absensinya ke-miss). Bisa diganti di tiap kartu.</div>' : '')
     + (LAP_DUP.length ? '<div class="inv-beda-banner" style="background:#fdecea;border-color:#f3c2bd;color:#8a1c12">🔁 ' + LAP_DUP.length + ' laporan dobel (tanggal sama) — dihitung 1x saja. <button class="ib-btn" onclick="hapusLaporanDobel()">Bersihkan</button></div>' : '');
   const _nEnBeda = invEntities.filter(function (en) { return en.members.some(invBeda); }).length;
+  const _nCat = invEntities.reduce(function (a, en) { return a + catOfEntity(en).filter(function (c) { return !c.selesai; }).length; }, 0);
   const _tabs = '<div class="inv-ftabs"><button class="inv-ftab' + (INV_FILTER === 'all' ? ' on' : '') + '" onclick="setInvFilter(\'all\')">Semua (' + invEntities.length + ')</button>'
     + '<button class="inv-ftab warn' + (INV_FILTER === 'beda' ? ' on' : '') + '" onclick="setInvFilter(\'beda\')">⚠ Beda data (' + _nEnBeda + ')</button></div>';
-  el.innerHTML = _head + _banner + _tabs + _search + invEntities.map(function (en, i) {
+  const _catBanner = _nCat ? '<div class="inv-beda-banner" style="background:#eef4ff;border-color:#c9dbff;color:#1e3a8a">📝 ' + _nCat + ' catatan tagihan belum diproses — cek di kartu tiap murid, sesuaikan invoice, lalu centang ○ jadi ✓.</div>' : '';
+  el.innerHTML = _head + _banner + _catBanner + _tabs + _search + invEntities.map(function (en, i) {
     let est = 0; en.members.forEach(function (m) { est += (invSesi(m) * m.tarif) + (m.sf * m.sf_rate) + (en.isGroup ? 0 : invTransportQty(m) * m.transport) + invExtras(m).reduce(function (a, x) { return a + (Number(x.jumlah) || 0); }, 0); });
     if (en.isGroup) { const gt = grupTransport(en); est += gt.qty * gt.rate; }
     const sub = en.members.map(function (m) { return m.nama + ' (' + invSesi(m) + ' les' + (m.sf ? ', ' + m.sf + ' fee' : '') + ')'; }).join(', ')
@@ -3363,7 +3459,7 @@ async function _loadInvBuat() {
     const inv = en.invoice;
     const badge = inv ? ('<span class="inv-badge ' + (inv.lunas ? 'lunas' : 'belum') + '">' + (inv.lunas ? 'Lunas' : 'Belum') + ' · ' + inv.kode + '</span>') : '<span style="font-size:11.5px;color:var(--muted)">est. ' + fmtRp(est) + '</span>';
     const _q = (en.title + ' ' + en.members.map(function (m) { return m.nama; }).join(' ')).toLowerCase().replace(/"/g, '');
-    return '<div class="inv-entity" data-q="' + _q + '" data-beda="' + (en.members.some(invBeda) ? 1 : 0) + '"><div style="min-width:0"><div class="inv-entity-title">' + en.title + (en.isGroup ? ' 👥' : '') + '</div><div class="inv-entity-sub">' + sub + '</div>' + invBedaHTML(en) + '<div style="margin-top:4px">' + badge + '</div></div><div style="display:flex;gap:6px;flex-shrink:0">' + (inv ? '<button class="btn-sm" style="background:#25D366;color:#fff" onclick="kirimWAEntity(' + i + ')">💬 WA</button>' : '') + '<button class="btn-sm primary" onclick="openInvoice(' + i + ')">' + (inv ? 'Lihat' : 'Buat') + '</button></div></div>';
+    return '<div class="inv-entity" data-q="' + _q + '" data-beda="' + (en.members.some(invBeda) ? 1 : 0) + '"><div style="min-width:0"><div class="inv-entity-title">' + en.title + (en.isGroup ? ' 👥' : '') + '</div><div class="inv-entity-sub">' + sub + '</div>' + invBedaHTML(en) + catHTML(catOfEntity(en), true) + '<div style="margin-top:4px">' + badge + '</div></div><div style="display:flex;gap:6px;flex-shrink:0">' + (inv ? '<button class="btn-sm" style="background:#25D366;color:#fff" onclick="kirimWAEntity(' + i + ')">💬 WA</button>' : '') + '<button class="btn-sm primary" onclick="openInvoice(' + i + ')">' + (inv ? 'Lihat' : 'Buat') + '</button></div></div>';
   }).join('');
 }
 
@@ -3503,23 +3599,26 @@ function renderInvDetail() {
   const lines = invLines.map(function (l, idx) {
     const amt = (Number(l.qty) || 0) * (Number(l.rate) || 0); total += amt;
     const lap = (l.kind === 'les' && ((l.hadir != null && l.hadir !== (Number(l.qty) || 0)) || (l.laporan != null && l.laporan !== (Number(l.qty) || 0)))) ? ' <span style="color:#b3402f;font-size:11px">(absensi: ' + (l.hadir || 0) + ' · laporan: ' + (l.laporan || 0) + ')</span>' : '';
-    return '<div class="inv-line"><span>' + l.label + lap + '</span><input type="number" min="0" value="' + l.qty + '" onchange="setInvQty(' + idx + ',this.value)"><span style="font-size:12px;color:var(--muted)">×' + fmtRp(l.rate) + '</span><span class="amt">' + fmtRp(amt) + '</span></div>';
+    return '<div class="inv-line"><span>' + l.label + lap + '</span><input type="number" min="0" value="' + l.qty + '" onchange="setInvQty(' + idx + ',this.value)"><span class="inv-rate">×<input type="number" min="0" step="1000" value="' + (Number(l.rate) || 0) + '" onchange="setInvRate(' + idx + ',this.value)"></span><span class="amt">' + fmtRp(amt) + '</span><button class="inv-ldel" title="Hapus baris" onclick="hapusInvLine(' + idx + ')">✕</button></div>';
   }).join('');
   document.getElementById('inv-detail').innerHTML =
     '<div style="text-align:center;margin-bottom:12px"><div style="font-family:\'Cormorant Garamond\',serif;font-size:22px;font-weight:600;color:var(--navy)">Stanley Private Piano Course</div><div style="font-size:12px;color:var(--muted)">INVOICE' + (inv ? ' · ' + inv.kode : '') + ' · ' + labelBulan(invBulan()) + '</div></div>'
     + '<div style="font-size:13px;margin-bottom:8px">Kepada: <strong>' + invCurrent.title + '</strong></div>'
+    + catHTML(catOfEntity(invCurrent), false)
     + (function () { const t = (invCurrent.members || []).map(function (m) { const x = tglLesOf(m.nama); return x ? ((invCurrent.members.length > 1 ? '<b>' + m.nama + ':</b> ' : '') + x) : ''; }).filter(Boolean).join('<br>'); return t ? '<div class="inv-tgl" style="margin:-2px 0 10px">📅 Tanggal les: ' + t + '</div>' : ''; })()
     + lines
     + '<div class="inv-line" style="border:none;font-weight:700;margin-top:4px"><span>Total</span><span></span><span></span><span class="amt">' + fmtRp(total) + '</span></div>'
-    + '<button class="btn-sm" style="margin-top:10px" onclick="addInvExtra()">+ Tambah item (buku/lainnya)</button>';
+    + '<button class="btn-sm" style="margin-top:10px" onclick="addInvExtra()">+ Tambah baris (transport/buku/lainnya)</button>';
   const tb = document.getElementById('inv-terbit-btn'); if (tb) tb.textContent = inv ? 'Update Invoice' : 'Simpan & Terbitkan';
 }
 
 function setInvQty(idx, v) { invLines[idx].qty = Number(v) || 0; renderInvDetail(); }
+function setInvRate(idx, v) { invLines[idx].rate = Number(v) || 0; renderInvDetail(); }
+function hapusInvLine(idx) { invLines.splice(idx, 1); renderInvDetail(); }
 
 function addInvExtra() {
-  const label = prompt('Nama item (mis. Buku):'); if (!label) return;
-  const amt = Number(prompt('Jumlah (Rp):')) || 0;
+  const label = prompt('Nama item (mis. Transport tambahan, Buku):'); if (!label) return;
+  const amt = qiAmount(prompt('Jumlah (Rp), cth. 20000 / 20rb:') || '') || 0;
   invLines.push({ label: label, qty: 1, rate: amt, kind: 'extra' });
   renderInvDetail();
 }
