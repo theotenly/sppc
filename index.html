@@ -854,6 +854,11 @@
   #biaya-sheet .by-quick button{display:block;width:auto;flex:1;text-align:center;padding:7px 0;border:1px solid #f0d58a;background:#fff8e6;border-radius:999px;font-weight:700}
   #biaya-sheet .qi-save{display:block;text-align:center;background:#3f7d6a;color:#fff;padding:12px;border-radius:12px;font-weight:800}
   #biaya-sheet .btn-sm{display:inline-flex;width:auto;align-items:center}
+  .hm-pop-btns{display:grid;grid-template-columns:1fr 1.2fr;gap:8px;margin-top:14px}
+  .act-box .hm-pop-btns .hm-pop-go{margin-top:0}
+  .act-box .hm-pop-save{display:block;width:100%;text-align:center;background:#fff;color:#4a0d1a;border:2px solid #e8d3a6;padding:13px;border-radius:16px;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit}
+  .act-box .hm-pop-save:hover{background:#fff8e6}
+  .hm-pop-note{font-size:11px;color:#9a8f7c;text-align:center;margin-top:8px}
 </style>
 </head>
 <body>
@@ -4495,11 +4500,26 @@ function hmSelesai(id) {
     + '<button class="hm-pop-x" aria-label="Tutup" onclick="document.getElementById(\'hm-pop\').classList.remove(\'open\')">✕</button>'
     + '<div class="hm-pop-top"><div class="hm-pop-av">' + hmPerson(o.nama) + '</div><div class="hm-pop-info"><b>' + lapEsc(o.nama) + '</b>' + (w ? '<small>WA ·' + w + '</small>' : '') + '<span class="hm-st ' + st.c + '">' + st.t + '</span></div></div>'
     + '<div class="qi-lbl">Harga jasa</div>'
-    + '<div class="hm-pop-nom"><span>Rp</span><input id="hm-pop-inp" type="text" inputmode="numeric" placeholder="0" value="' + (j && Number(j.harga) ? Number(j.harga).toLocaleString('id-ID') : '') + '" onkeydown="if(event.key===\'Enter\')hmKonfirm(' + id + ')"></div>'
+    + '<div class="hm-pop-nom"><span>Rp</span><input id="hm-pop-inp" type="text" inputmode="numeric" placeholder="0" value="' + (j && Number(j.harga) ? Number(j.harga).toLocaleString('id-ID') : '') + '" onkeydown="if(event.key===\'Enter\')hmSimpanHarga(' + id + ')"></div>'
     + '<div class="hm-pop-q">' + ['25rb', '50rb', '75rb', '100rb'].map(function (q) { return '<button type="button" onclick="document.getElementById(\'hm-pop-inp\').value=\'' + q + '\'">' + q + '</button>'; }).join('') + '</div>'
-    + '<button class="hm-pop-go" onclick="hmKonfirm(' + id + ')">✓ Selesai &amp; simpan</button></div>';
+    + '<div class="hm-pop-btns"><button class="hm-pop-save" onclick="hmSimpanHarga(' + id + ')">💾 Simpan harga</button><button class="hm-pop-go" onclick="hmKonfirm(' + id + ')">✓ Selesai</button></div>'
+    + '<div class="hm-pop-note">Simpan harga = pesanan tetap di antrian · Selesai = pesanan selesai + follow-up dimulai</div></div>';
   sh.classList.add('open');
   setTimeout(function () { const i = document.getElementById('hm-pop-inp'); if (i) i.focus(); }, 80);
+}
+async function hmSimpanHarga(id) {
+  const o = HM_ORD.find(function (x) { return x.id === id; }); if (!o) return;
+  const inp = document.getElementById('hm-pop-inp'); const harga = qiAmount(inp ? inp.value.trim() : '');
+  if (!harga) { showToast('⚠ Isi harga dulu'); return; }
+  try {
+    const ex = HM_JUAL.filter(function (x) { return x.order_id === id && String(x.tanggal) >= String(o.tgl_order); }).pop();
+    const r = ex ? await sb.from('notangka_penjualan').update({ harga: harga }).eq('id', ex.id)
+                 : await sb.from('notangka_penjualan').insert({ order_id: id, nama: o.nama, tanggal: todayISO(), detail: o.detail || '', harga: harga, kategori: 'notangka' });
+    if (r.error) throw new Error(r.error.message);
+    document.getElementById('hm-pop').classList.remove('open');
+    showToast('💾 Harga ' + o.nama + ' disimpan · ' + fmtRp(harga) + ' (masih dikerjakan)');
+    renderHmOrders();
+  } catch (e) { showToast('⚠ Gagal: ' + e.message); }
 }
 async function hmKonfirm(id) {
   const o = HM_ORD.find(function (x) { return x.id === id; }); if (!o) return;
