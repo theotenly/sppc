@@ -470,7 +470,7 @@ function invoiceDocHTML(inv) {
     if (/Les$/.test(label)) { nama = label.indexOf(' — ') >= 0 ? label.split(' — ')[0] : inv.target; dur = durOf(nama); biaya = fmtRpO(rate); jml = qty; lesCount += qty; }
     else if (/Transport$/.test(label)) { const np = label.indexOf(' — ') >= 0 ? label.split(' — ')[0] : ''; nama = 'Transport' + (np ? ' (' + np + ')' : ''); dur = '—'; biaya = fmtRpO(rate); jml = qty; }
     else if (/Schedule Fee$/.test(label)) { const np = label.indexOf(' — ') >= 0 ? label.split(' — ')[0] : ''; nama = 'Schedule Fee' + (np ? ' (' + np + ')' : ''); dur = '—'; biaya = fmtRpO(rate); jml = qty; }
-    else { nama = label; dur = '—'; biaya = ''; jml = ''; }
+    else { nama = label; dur = '—'; biaya = rate ? fmtRpO(rate) : ''; jml = rate ? qty : ''; }
     return '<tr><td style="padding:9px 10px;border-bottom:1px solid #eee">' + nama + '</td><td style="padding:9px 10px;border-bottom:1px solid #eee;text-align:center">' + dur + '</td><td style="padding:9px 10px;border-bottom:1px solid #eee;text-align:right">' + biaya + '</td><td style="padding:9px 10px;border-bottom:1px solid #eee;text-align:center">' + jml + '</td><td style="padding:9px 10px;border-bottom:1px solid #eee;text-align:right">' + fmtRpO(amt) + '</td></tr>';
   }).join('');
   return '<div style="max-width:640px;margin:0 auto;font-family:sans-serif;color:#2b0714;background:#fff;padding:4px">'

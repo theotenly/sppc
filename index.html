@@ -782,6 +782,78 @@
   .k-st.done .k-pi i{animation:none}
   .k-note{position:absolute;top:0;right:10px;font-style:normal;color:#C9A24D;font-size:13px;animation:hmNote 2s ease-out infinite;animation-delay:var(--d,0s)}
   @media (prefers-reduced-motion:reduce){.k-pi i,.k-note,.q-sky,.q-crown,.k-ch .ps-b{animation:none!important}}
+  /* ── scroll kiri-kanan ── */
+  .sc-wrap{position:relative}
+  .sc-btn{position:absolute;top:50%;transform:translateY(-50%);z-index:6;width:30px;height:30px;border-radius:50%;border:none;background:rgba(255,255,255,.92);box-shadow:0 3px 10px rgba(0,0,0,.18);font-size:20px;font-weight:800;color:#4a0d1a;cursor:pointer;display:none;line-height:1}
+  .sc-btn.l{left:6px}.sc-btn.r{right:6px}
+  .q-scene .sc-btn.r{right:118px}
+  .sc-wrap.can-l .sc-btn.l,.sc-wrap.can-r .sc-btn.r{display:block}
+  .sc-wrap.can-l::before,.sc-wrap.can-r::after{content:'';position:absolute;top:0;bottom:0;width:26px;z-index:5;pointer-events:none}
+  .sc-wrap.can-l::before{left:0;background:linear-gradient(90deg,rgba(0,0,0,.08),transparent)}
+  .sc-wrap.can-r::after{right:0;background:linear-gradient(270deg,rgba(0,0,0,.08),transparent)}
+  .q-scene.sc-wrap.can-r::after{right:110px}
+  .sc-row{scroll-snap-type:x proximity;cursor:grab}
+  .sc-row.drag{cursor:grabbing;scroll-snap-type:none}
+  .sc-row>*{scroll-snap-align:center}
+  .an-pick{border:none;background:#fff;border:1px solid #f0e6d4;border-radius:50%;width:30px;height:30px;cursor:pointer;font-size:14px;margin-left:6px}
+  /* ── 5 gaya animasi ── */
+  .an-2 .ps-b{animation:anHop .9s cubic-bezier(.3,.6,.4,1) infinite;animation-delay:var(--d,0s)}
+  @keyframes anHop{0%,100%{transform:translateY(0) scale(1.06,.92)}15%{transform:translateY(0) scale(.95,1.05)}45%{transform:translateY(-7px) scale(.97,1.03)}70%{transform:translateY(0) scale(1.08,.9)}85%{transform:translateY(0) scale(1,1)}}
+  .an-2 .ps-ar{animation:anArmsUp .9s ease-in-out infinite;animation-delay:var(--d,0s)}
+  @keyframes anArmsUp{0%,100%{transform:rotate(0)}45%{transform:rotate(-40deg)}}
+  .an-3 .ps-b{animation:anDance 1s ease-in-out infinite;animation-delay:var(--d,0s)}
+  @keyframes anDance{0%,100%{transform:translateX(0) rotate(0)}25%{transform:translateX(-2px) rotate(-8deg)}50%{transform:translateX(0) translateY(-2px) rotate(0)}75%{transform:translateX(2px) rotate(8deg)}}
+  .an-3 .ps-ar{animation:anDisco 1s ease-in-out infinite;animation-delay:var(--d,0s)}
+  @keyframes anDisco{0%,100%{transform:rotate(-160deg)}50%{transform:rotate(-20deg)}}
+  .an-4 .ps{shape-rendering:crispEdges;image-rendering:pixelated}
+  .an-4 .ps-b{animation:anPix .8s steps(2,end) infinite;animation-delay:var(--d,0s)}
+  @keyframes anPix{0%{transform:translateY(0)}100%{transform:translateY(-3px)}}
+  .an-4 .ps-ar{animation:anPixArm 1.6s steps(2,end) infinite;animation-delay:var(--d,0s)}
+  @keyframes anPixArm{0%{transform:rotate(0)}100%{transform:rotate(-150deg)}}
+  .an-4 .q-bub,.an-4 .k-ok,.an-4 .q-nm,.an-4 .k-nm{font-family:'Courier New',monospace;border-radius:0}
+  .an-5 .ps-b{animation:anBreath 3.2s ease-in-out infinite;animation-delay:var(--d,0s)}
+  @keyframes anBreath{0%,100%{transform:scale(1)}50%{transform:scale(1.035) translateY(-.5px)}}
+  .an-5 .ps-ar{animation:none}
+  .an-5 .ps-eye{animation-duration:6s}
+  .an-5 .k-pi i,.an-5 .q-bub,.an-5 .k-note,.an-5 .hm-ava i{animation-duration:4s}
+  .st-pixel .ps-b{animation:anPix .8s steps(2,end) infinite!important;animation-delay:var(--d,0s)!important}
+  .st-pixel .ps-ar{animation:anPixArm 1.6s steps(2,end) infinite!important;animation-delay:var(--d,0s)!important;transform-origin:50% 0}
+  .st-bean .ps-b{animation:anHop 1.1s cubic-bezier(.3,.6,.4,1) infinite!important;animation-delay:var(--d,0s)!important}
+  .st-bean .ps-ar{transform-origin:20% 10%}
+  .st-stick .ps-ar{transform-origin:0 0}
+  .ab-mode{display:flex;gap:3px;margin:2px 0 6px}
+  .ab-mode button{flex:1;border:1px solid var(--border);background:#fff;border-radius:999px;font-size:10.5px;font-weight:700;padding:4px 2px;cursor:pointer;color:var(--muted);font-family:inherit}
+  .ab-mode button.on{background:#4a0d1a;color:#fff;border-color:#4a0d1a}
+  .ab-extra{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+  .ab-ex-chip{font-size:10.5px;font-weight:700;background:#fff3cf;color:#7a4b00;border-radius:999px;padding:2px 4px 2px 8px;display:inline-flex;align-items:center;gap:2px}
+  .ab-ex-chip button{border:none;background:none;cursor:pointer;font-size:10px;color:#a3261e}
+  .ab-add{width:100%;margin-top:6px;border:1px dashed var(--border);background:none;border-radius:10px;padding:5px;font-size:11px;font-weight:700;color:var(--muted);cursor:pointer;font-family:inherit}
+  #biaya-sheet input[type=text]{width:100%;font-size:16px!important;padding:10px 12px;border:1px solid var(--border);border-radius:12px;font-family:inherit}
+  .by-quick{display:flex;gap:6px;margin-top:6px}
+  .by-quick button{flex:1;border:1px solid #f0d58a;background:#fff8e6;border-radius:999px;padding:6px;font-weight:700;font-size:12.5px;cursor:pointer;font-family:inherit}
+  .hm-pop-box{position:relative;padding-top:18px!important}
+  .hm-pop-x{position:absolute;top:12px;right:12px;width:34px;height:34px;border-radius:50%;border:none;background:#f3eee4;font-size:15px;cursor:pointer;color:#5b4636}
+  .hm-pop-top{display:flex;align-items:center;gap:14px;margin:0 40px 14px 2px}
+  .hm-pop-info{display:flex;flex-direction:column;align-items:flex-start;gap:4px;min-width:0}
+  .hm-pop-info b{font-size:18px;color:#2b0714;margin:0!important}
+  .hm-pop-info small{font-size:12px;color:#9a8f7c;font-weight:600}
+  .hm-pop-nom{display:flex;align-items:center;gap:8px;border:2px solid #ffd27a;border-radius:16px;padding:4px 14px;background:#fffaf0}
+  .hm-pop-nom span{font-weight:800;color:#9a8f7c;font-size:16px}
+  .hm-pop-nom input{flex:1;min-width:0;border:none!important;background:none!important;font-size:26px!important;font-weight:800;color:#2b0714;padding:8px 0!important;outline:none;font-family:inherit}
+  .hm-pop-q{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:10px}
+  .hm-pop-q button{border:1px solid #f0d58a;background:#fff8e6;border-radius:999px;padding:8px 0;font-weight:800;font-size:13px;cursor:pointer;font-family:inherit;color:#7a4b00}
+  .hm-pop-go{width:100%;margin-top:14px;border:none;border-radius:16px;padding:15px;font-size:16px;font-weight:800;cursor:pointer;font-family:inherit;color:#fff;background:#3f7d6a;box-shadow:0 6px 16px rgba(63,125,106,.35)}
+  .hm-pop-go:active{transform:scale(.98)}
+  #hm-pop-inp{border:none!important;font-size:26px!important;padding:8px 0!important;width:auto;flex:1;min-width:0;background:none}
+  .act-box .hm-pop-x{display:flex;align-items:center;justify-content:center;position:absolute;top:12px;right:12px;left:auto;width:34px;height:34px;padding:0;border-radius:50%;background:#f3eee4}
+  .act-box .hm-pop-q button{display:block;width:auto;text-align:center;justify-content:center;padding:9px 0;border-radius:999px;background:#fff8e6;border:1px solid #f0d58a;color:#7a4b00;font-weight:800}
+  .act-box .hm-pop-go{display:block;width:100%;text-align:center;background:#3f7d6a;color:#fff;padding:15px;border-radius:16px;font-size:16px;font-weight:800}
+  .act-box .hm-pop-go:hover{background:#356b5a}
+  #biaya-sheet .qi-kat button{display:inline-flex;width:auto;padding:7px 12px;border:1px solid var(--border);background:#fff;border-radius:999px;font-size:13px;font-weight:600}
+  #biaya-sheet .qi-kat button.on{background:#4a0d1a;color:#fff;border-color:#4a0d1a}
+  #biaya-sheet .by-quick button{display:block;width:auto;flex:1;text-align:center;padding:7px 0;border:1px solid #f0d58a;background:#fff8e6;border-radius:999px;font-weight:700}
+  #biaya-sheet .qi-save{display:block;text-align:center;background:#3f7d6a;color:#fff;padding:12px;border-radius:12px;font-weight:800}
+  #biaya-sheet .btn-sm{display:inline-flex;width:auto;align-items:center}
 </style>
 </head>
 <body>
@@ -1546,7 +1618,7 @@ async function apiPost(body) {
     const rows = [];
     (body.items || []).forEach(function (it) {
       const h = Math.min(1, Number(it.hadir) || 0); const sfv = Number(it.sf) || 0;
-      if (h > 0) rows.push({ tanggal: body.tanggal, nama: it.nama, jenis: 'hadir', jumlah: h, waktu: now });
+      if (h > 0) rows.push({ tanggal: body.tanggal, nama: it.nama, jenis: 'hadir', jumlah: h, waktu: now, mode: it.mode || '' });
       if (sfv > 0) rows.push({ tanggal: body.tanggal, nama: it.nama, jenis: 'sf', jumlah: sfv, waktu: now });
     });
     if (rows.length) { const res = await sb.from('absensi_harian').insert(rows); if (res.error) throw new Error(res.error.message); }
@@ -1559,7 +1631,7 @@ async function apiPost(body) {
     const rows = [];
     (body.items || []).forEach(function (it) {
       const h = Math.min(1, Number(it.hadir) || 0); const sfv = Number(it.sf) || 0;
-      if (h > 0) rows.push({ tanggal: body.tanggal, nama: it.nama, jenis: 'hadir', jumlah: h, waktu: now });
+      if (h > 0) rows.push({ tanggal: body.tanggal, nama: it.nama, jenis: 'hadir', jumlah: h, waktu: now, mode: it.mode || '' });
       if (sfv > 0) rows.push({ tanggal: body.tanggal, nama: it.nama, jenis: 'sf', jumlah: sfv, waktu: now });
     });
     if (rows.length) { const res = await sb.from('absensi_harian').insert(rows); if (res.error) throw new Error(res.error.message); }
@@ -2535,19 +2607,88 @@ async function loadAbsensiHarian() {
       <div class="ab-card-name">${nama} <button type="button" class="ab-del" onclick="deleteRosterMurid('${nm}')" title="Hapus murid">🗑</button></div>
       <div class="ab-group">
         <input type="hidden" class="absensi-inp" data-nama="${nama}" data-jenis="hadir" value="0">
+        <input type="hidden" class="absensi-mode" data-nama="${nama}" value="">
         <button type="button" class="ab-hadir-tg" data-nama="${nama}" onclick="toggleHadir('${nm}')">○ Hadir</button>
       </div>
+      <div class="ab-mode" data-nama="${nama}"><button type="button" class="on" onclick="setAbMode('${nm}','')">Offline</button><button type="button" onclick="setAbMode('${nm}','online')">Online</button><button type="button" onclick="setAbMode('${nm}','trial')">Trial</button></div>
       <div class="ab-group">
         <span class="ab-lbl">Fee</span>
         <button type="button" onclick="stepAbsensi('${nm}','sf',-1)">−</button>
         <input type="number" min="0" class="absensi-inp" data-nama="${nama}" data-jenis="sf" value="0" oninput="updateMarkedList()">
         <button type="button" onclick="stepAbsensi('${nm}','sf',1)">+</button>
       </div>
+      <div class="ab-extra" data-nama="${nama}"></div>
+      <button type="button" class="ab-add" onclick="bukaBiaya('${nm}')">＋ Biaya tambahan</button>
     </div>`;
   }).join('');
   filterAbsensi();
   updateMarkedList();
   loadRekomAbsensi(tgl);
+}
+
+
+// ── Absensi: mode (offline/online/trial) & biaya tambahan per tanggal ──
+function setAbMode(nama, mode) {
+  const inp = document.querySelector('.absensi-mode[data-nama="' + nama + '"]'); if (!inp) return;
+  inp.value = mode;
+  const box = document.querySelector('.ab-mode[data-nama="' + nama + '"]');
+  if (box) box.querySelectorAll('button').forEach(function (b, i) { b.classList.toggle('on', ['', 'online', 'trial'][i] === mode); });
+  const h = document.querySelector('.absensi-inp[data-nama="' + nama + '"][data-jenis="hadir"]');
+  if (mode && h && !(Number(h.value) > 0)) { h.value = 1; updateMarkedList(); }
+  if (mode === 'trial') { showToast('Trial: les tidak ditagih — isi biaya transport trial'); bukaBiaya(nama, 'transport', 'Transport trial'); }
+  if (mode === 'online') showToast('Online: les ditagih, transport tidak');
+}
+let BIAYA_FOR = null;
+function bukaBiaya(nama, kat, label) {
+  BIAYA_FOR = nama;
+  let sh = document.getElementById('biaya-sheet');
+  if (!sh) { sh = document.createElement('div'); sh.id = 'biaya-sheet'; sh.className = 'act-sheet'; sh.onclick = function (e) { if (e.target === sh) sh.classList.remove('open'); }; document.body.appendChild(sh); }
+  const tgl = document.getElementById('absensi-tgl').value || todayISO();
+  sh.innerHTML = '<div class="act-box"><div class="act-title">＋ Biaya tambahan · ' + lapEsc(nama) + ' <small style="font-weight:500;color:var(--muted)">' + fmtDMY(tgl) + '</small></div>'
+    + '<div class="qi-kat" id="by-kat">' + [['transport', '🚗 Transport'], ['buku', '📚 Buku'], ['lainnya', '✨ Lainnya']].map(function (k) { return '<button type="button" data-k="' + k[0] + '" onclick="pilihKatBiaya(\'' + k[0] + '\')">' + k[1] + '</button>'; }).join('') + '</div>'
+    + '<div class="qi-lbl">Keterangan</div><input type="text" id="by-label" placeholder="cth. Transport trial / Buku Piano Adventures">'
+    + '<div class="qi-lbl">Nominal (Rp)</div><input type="text" id="by-nom" inputmode="numeric" placeholder="cth. 25000 / 25rb" onkeydown="if(event.key===\'Enter\')simpanBiaya()">'
+    + '<div class="by-quick">' + ['10rb', '15rb', '25rb', '50rb'].map(function (q) { return '<button type="button" onclick="document.getElementById(\'by-nom\').value=\'' + q + '\'">' + q + '</button>'; }).join('') + '</div>'
+    + '<div style="display:flex;gap:8px;margin-top:12px"><button class="qi-save" style="flex:1" onclick="simpanBiaya()">💾 Simpan</button><button class="btn-sm" onclick="document.getElementById(\'biaya-sheet\').classList.remove(\'open\')">Batal</button></div></div>';
+  sh.classList.add('open');
+  pilihKatBiaya(kat || 'transport', label);
+  setTimeout(function () { const i = document.getElementById('by-nom'); if (i) i.focus(); }, 80);
+}
+function pilihKatBiaya(k, label) {
+  document.querySelectorAll('#by-kat button').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-k') === k); });
+  document.getElementById('by-kat').dataset.k = k;
+  const l = document.getElementById('by-label');
+  if (label) l.value = label; else if (!l.value || /^(Transport|Buku|Biaya lain)/.test(l.value)) l.value = { transport: 'Transport', buku: 'Buku', lainnya: 'Biaya lain' }[k];
+}
+async function simpanBiaya() {
+  const nama = BIAYA_FOR; if (!nama) return;
+  const jml = qiAmount(document.getElementById('by-nom').value);
+  if (!jml) { showToast('⚠ Isi nominal'); return; }
+  const k = document.getElementById('by-kat').dataset.k || 'transport';
+  const label = document.getElementById('by-label').value.trim() || { transport: 'Transport', buku: 'Buku', lainnya: 'Biaya lain' }[k];
+  const tgl = document.getElementById('absensi-tgl').value || todayISO();
+  const r = await sb.from('absensi_extra').insert({ tanggal: tgl, nama: nama, kategori: k, label: label, jumlah: jml });
+  if (r.error) { showToast('⚠ Gagal: ' + r.error.message); return; }
+  document.getElementById('biaya-sheet').classList.remove('open');
+  showToast('✓ ' + label + ' ' + fmtRp(jml) + ' dicatat · ' + nama);
+  loadExtraTanggal(tgl);
+}
+async function loadExtraTanggal(tgl) {
+  document.querySelectorAll('.ab-extra').forEach(function (e) { e.innerHTML = ''; });
+  let rows = [];
+  try { rows = (await sb.from('absensi_extra').select('*').eq('tanggal', tgl || todayISO())).data || []; } catch (e) {}
+  rows.forEach(function (x) {
+    const box = Array.prototype.find.call(document.querySelectorAll('.ab-extra'), function (b) { return String(b.getAttribute('data-nama')).toLowerCase() === String(x.nama).toLowerCase(); });
+    if (!box) return;
+    box.innerHTML += '<span class="ab-ex-chip">' + ({ transport: '🚗', buku: '📚' }[x.kategori] || '✨') + ' ' + lapEsc(x.label) + ' ' + (Number(x.jumlah) >= 1000 ? Math.round(x.jumlah / 1000) + 'rb' : x.jumlah) + '<button onclick="hapusBiaya(' + x.id + ')">✕</button></span>';
+    const card = box.closest('.ab-card'); if (card) { card.style.display = ''; }
+  });
+}
+async function hapusBiaya(id) {
+  if (!confirm('Hapus biaya tambahan ini?')) return;
+  const r = await sb.from('absensi_extra').delete().eq('id', id);
+  if (r.error) { showToast('⚠ ' + r.error.message); return; }
+  loadExtraTanggal(document.getElementById('absensi-tgl').value || todayISO());
 }
 
 // ── Riwayat 4 pertemuan terakhir di hari yang sama ──
@@ -2571,6 +2712,7 @@ async function loadRekomAbsensi(tgl) {
   const el = document.getElementById('absensi-rekom'); if (!el) return;
   el.innerHTML = ''; ABS_TODAY = {}; ABS_SHOW_ALL = false;
   const base = tgl || todayISO();
+  try { loadExtraTanggal(base); } catch (e) {}
   if (isNaN(new Date(base + 'T00:00:00').getTime())) return;
   let h; try { h = await weekdayHistory(base); } catch (e) { return; }
   const inRoster = function (n) { return absensiRoster.find(function (r) { return r.toLowerCase() === String(n).toLowerCase(); }); };
@@ -2894,9 +3036,10 @@ async function saveAbsensiHarian() {
   const map = {};
   document.querySelectorAll('.absensi-inp').forEach(inp => {
     const nm = inp.dataset.nama;
-    if (!map[nm]) map[nm] = { nama: nm, hadir: 0, sf: 0 };
+    if (!map[nm]) map[nm] = { nama: nm, hadir: 0, sf: 0, mode: '' };
     map[nm][inp.dataset.jenis] = Number(inp.value) || 0;
   });
+  document.querySelectorAll('.absensi-mode').forEach(inp => { const nm = inp.dataset.nama; if (map[nm]) map[nm].mode = inp.value || ''; });
   const items = Object.keys(map).map(k => map[k]);
   try {
     const ex = await sb.from('absensi_harian').select('nama').eq('tanggal', tgl).eq('jenis', 'hadir');
@@ -3143,7 +3286,13 @@ function invLapCount(m) { return LAP_LOADED ? invLapDates(m).length : (Number(m.
 function invLapOnly(m) { const a = invAbsDates(m); return invLapDates(m).filter(function (t) { return !a[t]; }); }
 function invGabungan(m) { return (Number(m.hadir) || 0) + invLapOnly(m).length; }
 function invBeda(m) { return invLapCount(m) !== (Number(m.hadir) || 0) || invLapOnly(m).length > 0; }
-function invSesi(m) { const src = invSrc(m); if (src === 'absensi') return Number(m.hadir) || 0; if (src === 'laporan') return invLapCount(m); return invGabungan(m); }
+let INV_EXTRA = {};
+function invModeCount(m, mode) { return (INV_TGL[String(m.nama).trim().toLowerCase()] || []).filter(function (x) { return !x.sf && x.mode === mode; }).reduce(function (a, x) { return a + (x.n || 1); }, 0); }
+function invSesiRaw(m) { const src = invSrc(m); if (src === 'absensi') return Number(m.hadir) || 0; if (src === 'laporan') return invLapCount(m); return invGabungan(m); }
+function invSesi(m) { return Math.max(0, invSesiRaw(m) - invModeCount(m, 'trial')); }
+function invTransportQty(m) { return Math.max(0, invSesi(m) - invModeCount(m, 'online')); }
+function invExtras(m) { return INV_EXTRA[String(m.nama).trim().toLowerCase()] || []; }
+function extraLabel(x) { const d = new Date(String(x.tanggal).slice(0, 10) + 'T00:00:00'); return x.label + ' (' + d.getDate() + ' ' + ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'][d.getMonth()] + ')'; }
 function pilihSumber(nama, src) {
   try { localStorage.setItem(invSrcKey(nama), src); } catch (e) {}
   showToast('✓ ' + nama + ': pakai data ' + src);
@@ -3202,7 +3351,7 @@ async function _loadInvBuat() {
   const _tabs = '<div class="inv-ftabs"><button class="inv-ftab' + (INV_FILTER === 'all' ? ' on' : '') + '" onclick="setInvFilter(\'all\')">Semua (' + invEntities.length + ')</button>'
     + '<button class="inv-ftab warn' + (INV_FILTER === 'beda' ? ' on' : '') + '" onclick="setInvFilter(\'beda\')">⚠ Beda data (' + _nEnBeda + ')</button></div>';
   el.innerHTML = _head + _banner + _tabs + _search + invEntities.map(function (en, i) {
-    let est = 0; en.members.forEach(function (m) { est += (invSesi(m) * m.tarif) + (m.sf * m.sf_rate) + (en.isGroup ? 0 : invSesi(m) * m.transport); });
+    let est = 0; en.members.forEach(function (m) { est += (invSesi(m) * m.tarif) + (m.sf * m.sf_rate) + (en.isGroup ? 0 : invTransportQty(m) * m.transport) + invExtras(m).reduce(function (a, x) { return a + (Number(x.jumlah) || 0); }, 0); });
     if (en.isGroup) { const gt = grupTransport(en); est += gt.qty * gt.rate; }
     const sub = en.members.map(function (m) { return m.nama + ' (' + invSesi(m) + ' les' + (m.sf ? ', ' + m.sf + ' fee' : '') + ')'; }).join(', ')
       + '<div class="inv-tgl">' + en.members.map(function (m) { const t = tglLesOf(m.nama); return t ? ((en.members.length > 1 ? '<b>' + m.nama + ':</b> ' : '📅 ') + t) : ''; }).filter(Boolean).join('<br>') + '</div>';
@@ -3244,9 +3393,10 @@ async function buatInvoiceSemua() {
     en.members.forEach(function (m) {
       const pref = en.isGroup ? (m.nama + ' — ') : '';
       const push = function (label, qty, rate) { const q = Number(qty) || 0, r = Number(rate) || 0; const amt = q * r; total += amt; items.push({ label: label, qty: q, rate: r, amount: amt }); };
-      push(pref + 'Les', invSesi(m), m.tarif);
+      if (invSesi(m) > 0 || !invExtras(m).length) push(pref + 'Les', invSesi(m), m.tarif);
       if (m.sf > 0) push(pref + 'Schedule Fee', m.sf, m.sf_rate);
-      if (!en.isGroup && m.transport > 0) push(pref + 'Transport', invSesi(m), m.transport);
+      if (!en.isGroup && m.transport > 0 && invTransportQty(m) > 0) push(pref + 'Transport', invTransportQty(m), m.transport);
+      invExtras(m).forEach(function (x) { push(pref + extraLabel(x), 1, Number(x.jumlah) || 0); });
     });
     if (en.isGroup) { const gt = grupTransport(en); if (gt.rate > 0 && gt.qty > 0) { const amt = gt.qty * gt.rate; total += amt; items.push({ label: 'Transport', qty: gt.qty, rate: gt.rate, amount: amt }); } }
     const body = { action: 'save_invoice', bulan: invBulan(), target: en.title, items: items, total: total };
@@ -3264,7 +3414,8 @@ function openInvoice(i) {
     const pref = invCurrent.isGroup ? (m.nama + ' — ') : '';
     invLines.push({ label: pref + 'Les', qty: invSesi(m), rate: m.tarif, hadir: m.hadir, laporan: m.laporan, kind: 'les' });
     if (m.sf > 0) invLines.push({ label: pref + 'Schedule Fee', qty: m.sf, rate: m.sf_rate, kind: 'sf' });
-    if (!invCurrent.isGroup && m.transport > 0) invLines.push({ label: pref + 'Transport', qty: invSesi(m), rate: m.transport, kind: 'tr' });
+    if (!invCurrent.isGroup && m.transport > 0 && invTransportQty(m) > 0) invLines.push({ label: pref + 'Transport', qty: invTransportQty(m), rate: m.transport, kind: 'tr' });
+    invExtras(m).forEach(function (x) { invLines.push({ label: pref + extraLabel(x), qty: 1, rate: Number(x.jumlah) || 0, kind: 'ex' }); });
   });
   if (invCurrent.isGroup) { const gt = grupTransport(invCurrent); if (gt.rate > 0 && gt.qty > 0) invLines.push({ label: 'Transport', qty: gt.qty, rate: gt.rate, kind: 'tr', note: gt.qty + ' hari datang' }); }
   renderInvDetail();
@@ -3308,11 +3459,12 @@ async function loadInvTanggal(ym) {
     }
   } catch (e) {}
   try {
-    const r = await sb.from('absensi_harian').select('nama,tanggal,jenis,jumlah').gte('tanggal', ym + '-01').lt('tanggal', next).order('tanggal');
+    try { const ex = await sb.from('absensi_extra').select('*').gte('tanggal', ym + '-01').lt('tanggal', next).order('tanggal'); INV_EXTRA = {}; (ex.data || []).forEach(function (x) { const k = String(x.nama).trim().toLowerCase(); (INV_EXTRA[k] = INV_EXTRA[k] || []).push(x); }); } catch (e) { INV_EXTRA = {}; }
+    const r = await sb.from('absensi_harian').select('nama,tanggal,jenis,jumlah,mode').gte('tanggal', ym + '-01').lt('tanggal', next).order('tanggal');
     (r.data || []).forEach(function (x) {
       const j = String(x.jenis || 'hadir').toLowerCase(); if ((Number(x.jumlah) || 0) <= 0) return;
       const k = String(x.nama).trim().toLowerCase(); if (!INV_TGL[k]) INV_TGL[k] = [];
-      INV_TGL[k].push({ t: x.tanggal, n: Number(x.jumlah) || 1, sf: (j === 'sf' || j === 'fee' || j === 'schedule' || j === 'schedule_fee') });
+      INV_TGL[k].push({ t: x.tanggal, n: Number(x.jumlah) || 1, sf: (j === 'sf' || j === 'fee' || j === 'schedule' || j === 'schedule_fee'), mode: x.mode || '' });
     });
   } catch (e) {}
 }
@@ -3322,7 +3474,7 @@ function grupTransport(en) {
   const days = {};
   let ada = false;
   en.members.forEach(function (m) {
-    (INV_TGL[String(m.nama).trim().toLowerCase()] || []).forEach(function (x) { ada = true; if (!x.sf) days[x.t] = 1; });
+    (INV_TGL[String(m.nama).trim().toLowerCase()] || []).forEach(function (x) { ada = true; if (!x.sf && !x.mode) days[x.t] = 1; });
     if (invSrc(m) !== 'absensi') invLapOnly(m).forEach(function (t) { ada = true; days[t] = 1; });
   });
   let qty = Object.keys(days).length;
@@ -3337,7 +3489,7 @@ function tglLesOf(nama) {
   invLapOnly({ nama: nama }).forEach(function (t) { arr.push({ t: t, n: 1, lap: true }); });
   if (!arr.length) return '';
   arr.sort(function (a, b) { return String(a.t).localeCompare(String(b.t)); });
-  return arr.map(function (x) { const d = +String(x.t).slice(8, 10); return (x.sf ? '<span title="Schedule fee" style="color:#b3402f">' + d + '·fee</span>' : (x.lap ? '<span title="Ada laporan, absensi ke-miss" style="color:#b36b00;font-weight:600">' + d + '📝</span>' : String(d))) + (x.n > 1 ? '×' + x.n : ''); }).join(', ');
+  return arr.map(function (x) { const d = +String(x.t).slice(8, 10); return (x.sf ? '<span title="Schedule fee" style="color:#b3402f">' + d + '·fee</span>' : x.mode === 'online' ? '<span title="Online" style="color:#185fa5">' + d + '💻</span>' : x.mode === 'trial' ? '<span title="Trial" style="color:#7c3aed">' + d + '·trial</span>' : (x.lap ? '<span title="Ada laporan, absensi ke-miss" style="color:#b36b00;font-weight:600">' + d + '📝</span>' : String(d))) + (x.n > 1 ? '×' + x.n : ''); }).join(', ');
 }
 
 function renderInvDetail() {
@@ -3399,7 +3551,7 @@ function invoiceDocHTML(inv) {
     if (/Les$/.test(label)) { nama = label.indexOf(' — ') >= 0 ? label.split(' — ')[0] : inv.target; dur = durOf(nama); biaya = fmtRp(rate); jml = qty; lesCount += qty; }
     else if (/Transport$/.test(label)) { const np = label.indexOf(' — ') >= 0 ? label.split(' — ')[0] : ''; nama = 'Transport' + (np ? ' (' + np + ')' : ''); dur = '—'; biaya = fmtRp(rate); jml = qty; }
     else if (/Schedule Fee$/.test(label)) { const np = label.indexOf(' — ') >= 0 ? label.split(' — ')[0] : ''; nama = 'Schedule Fee' + (np ? ' (' + np + ')' : ''); dur = '—'; biaya = fmtRp(rate); jml = qty; }
-    else { nama = label; dur = '—'; biaya = ''; jml = ''; }
+    else { nama = label; dur = '—'; biaya = rate ? fmtRp(rate) : ''; jml = rate ? qty : ''; }
     return '<tr><td style="padding:9px 10px;border-bottom:1px solid #eee">' + nama + '</td><td style="padding:9px 10px;border-bottom:1px solid #eee;text-align:center">' + dur + '</td><td style="padding:9px 10px;border-bottom:1px solid #eee;text-align:right">' + biaya + '</td><td style="padding:9px 10px;border-bottom:1px solid #eee;text-align:center">' + jml + '</td><td style="padding:9px 10px;border-bottom:1px solid #eee;text-align:right">' + fmtRp(amt) + '</td></tr>';
   }).join('');
   return '<div style="max-width:640px;margin:0 auto;font-family:sans-serif;color:#2b0714;background:#fff;padding:4px">'
@@ -3983,14 +4135,15 @@ async function loadHome() {
     const ab = await sb.from('absensi_harian').select('nama,jenis,jumlah').eq('tanggal', today);
     const names = {};
     Object.keys(wh.map).forEach(function (k) { names[k] = 1; });
-    (ab.data || []).forEach(function (x) { if (String(x.jenis || 'hadir') === 'hadir' && Number(x.jumlah) > 0) names[String(x.nama).trim().toLowerCase()] = 1; });
+    const hadirToday = {};
+    (ab.data || []).forEach(function (x) { if (String(x.jenis || 'hadir') === 'hadir' && Number(x.jumlah) > 0) { names[String(x.nama).trim().toLowerCase()] = 1; hadirToday[String(x.nama).trim().toLowerCase()] = 1; } });
     const stop = await namaBerhentiSet(); Object.keys(stop).forEach(function (k) { delete names[k]; });
     const lr = await sb.from('laporan').select('murid_id').eq('tanggal', today);
-    const done = {}; (lr.data || []).forEach(function (x) { const m = students.find(function (s) { return s.id === x.murid_id; }); if (m) done[String(m.nama).trim().toLowerCase()] = 1; });
+    const done = Object.assign({}, hadirToday); (lr.data || []).forEach(function (x) { const m = students.find(function (s) { return s.id === x.murid_id; }); if (m) done[String(m.nama).trim().toLowerCase()] = 1; });
     const n = Object.keys(names).length, belum = Object.keys(names).filter(function (k) { return !done[k]; }).length;
     set('hm-les-n', n);
     try { renderHmKelas(Object.keys(names).map(function (k) { const m = students.find(function (s) { return String(s.nama).trim().toLowerCase() === k; }); return { k: k, nama: m ? m.nama : (wh.map[k] ? wh.map[k].nama : k), id: m ? m.id : null, done: !!done[k] }; })); } catch (e) {}
-    set('hm-les-sub', n ? (belum ? '⚠️ ' + belum + ' belum dilaporkan' : '✓ Semua sudah dilaporkan') : 'Tidak ada jadwal les hari ini');
+    set('hm-les-sub', n ? (belum ? '⚠️ ' + belum + ' belum hadir / laporan' : '✓ Semua beres') : 'Tidak ada jadwal les hari ini');
   } catch (e) { set('hm-les-sub', ''); }
   // belum bayar
   try {
@@ -4014,14 +4167,42 @@ async function loadHome() {
 
 
 
+
+// ── Scroll kiri-kanan + gaya animasi ──
+function hmScroll(btn, dir) { const row = btn.parentElement.querySelector('.sc-row'); if (row) row.scrollBy({ left: dir * Math.max(160, row.clientWidth * 0.7), behavior: 'smooth' }); }
+function hmInitScroll(root) {
+  root.querySelectorAll('.sc-wrap').forEach(function (w) {
+    const row = w.querySelector('.sc-row'); if (!row || row._sc) return; row._sc = 1;
+    const upd = function () { const max = row.scrollWidth - row.clientWidth; const rev = getComputedStyle(row).flexDirection === 'row-reverse';
+      let pos = rev ? -row.scrollLeft : row.scrollLeft; if (rev && row.scrollLeft > 0) pos = max - row.scrollLeft;
+      w.classList.toggle('can-l', max > 4 && (rev ? pos < max - 4 : pos > 4)); w.classList.toggle('can-r', max > 4 && (rev ? pos > 4 : pos < max - 4)); };
+    row.addEventListener('scroll', upd, { passive: true }); setTimeout(upd, 60); window.addEventListener('resize', upd);
+    // geser pakai mouse (laptop)
+    let down = false, sx = 0, sl = 0, moved = false;
+    row.addEventListener('mousedown', function (e) { down = true; moved = false; sx = e.pageX; sl = row.scrollLeft; row.classList.add('drag'); });
+    window.addEventListener('mouseup', function () { down = false; row.classList.remove('drag'); });
+    row.addEventListener('mousemove', function (e) { if (!down) return; const dx = e.pageX - sx; if (Math.abs(dx) > 4) moved = true; row.scrollLeft = sl - dx; });
+    row.addEventListener('click', function (e) { if (moved) { e.stopPropagation(); e.preventDefault(); moved = false; } }, true);
+  });
+}
+const AN_STYLES = [['an-1', '🙂 Goyang santai'], ['an-2', '🦘 Lompat-lompat'], ['an-3', '💃 Joget'], ['an-4', '👾 Retro 8-bit'], ['an-5', '🧘 Tenang']];
+function applyGayaAnim() { let g = 'an-1'; try { g = localStorage.getItem('sppc_anim') || 'an-1'; } catch (e) {} const h = document.getElementById('home-screen'); if (!h) return; AN_STYLES.forEach(function (x) { h.classList.remove(x[0]); }); h.classList.add(g); }
+function gantiGayaAnim() {
+  let g = 'an-1'; try { g = localStorage.getItem('sppc_anim') || 'an-1'; } catch (e) {}
+  const i = (AN_STYLES.findIndex(function (x) { return x[0] === g; }) + 1) % AN_STYLES.length;
+  try { localStorage.setItem('sppc_anim', AN_STYLES[i][0]); } catch (e) {}
+  applyGayaAnim(); showToast('🎨 Gaya animasi: ' + AN_STYLES[i][1]);
+}
+
 // ── Kelas hari ini: murid duduk di piano ──
 function renderHmKelas(list) {
   const el = document.getElementById('hm-kelas'); if (!el) return;
+  applyGayaAnim();
   if (!list.length) { el.innerHTML = ''; return; }
   list.sort(function (a, b) { return (a.done - b.done) || String(a.nama).localeCompare(String(b.nama)); });
   const belum = list.filter(function (x) { return !x.done; }).length;
-  el.innerHTML = '<div class="hm-sec-h"><span>🎹 Kelas hari ini</span><b>' + list.length + '</b><small class="q-hint">' + (belum ? belum + ' belum dilaporkan' : '✓ semua beres') + '</small></div>'
-    + '<div class="k-room"><div class="k-row">' + list.map(function (x, i) {
+  el.innerHTML = '<div class="hm-sec-h"><span>🎹 Kelas hari ini</span><b>' + list.length + '</b><small class="q-hint">' + (belum ? belum + ' belum beres' : '✓ semua beres') + '</small></div>'
+    + '<div class="k-room sc-wrap"><button class="sc-btn l" onclick="hmScroll(this,-1)">‹</button><button class="sc-btn r" onclick="hmScroll(this,1)">›</button><div class="k-row sc-row">' + list.map(function (x, i) {
       return '<button type="button" class="k-st' + (x.done ? ' done' : '') + '" style="--d:-' + (i * 0.53).toFixed(2) + 's" onclick="hmBukaLaporan(\'' + (x.id || '') + '\')">'
         + '<span class="k-ch">' + hmPerson(x.nama) + '</span>'
         + '<span class="k-pi"><i></i><i></i><i></i><i></i><i></i></span>'
@@ -4029,6 +4210,7 @@ function renderHmKelas(list) {
         + '<span class="k-ok">' + (x.done ? '✓ beres' : '✏️ lapor') + '</span>'
         + (x.done ? '' : '<em class="k-note">♪</em>') + '</button>';
     }).join('') + '</div></div>';
+  hmInitScroll(el);
 }
 function hmBukaLaporan(id) {
   showPage('laporan');
@@ -4058,7 +4240,7 @@ async function renderHmOrders() {
     return;
   }
   el.innerHTML = '<div class="hm-sec-h"><span>🛠 Pesanan berjalan</span><b>' + HM_ORD.length + '</b><small class="q-hint">👆 tap = selesai</small></div>'
-    + '<div class="q-scene ' + hmTod() + '"><span class="q-sky"></span><div class="q-line" id="q-line">'
+    + '<div class="q-scene sc-wrap ' + hmTod() + '"><span class="q-sky"></span><button class="sc-btn l" onclick="hmScroll(this,-1)">‹</button><button class="sc-btn r" onclick="hmScroll(this,1)">›</button><div class="q-line sc-row" id="q-line">'
     + HM_ORD.map(function (o, i) {
       const j = HM_JUAL.filter(function (x) { return x.order_id === o.id && String(x.tanggal) >= String(o.tgl_order); }).pop();
       const st = hmStatus(o), dd = hmDays(o);
@@ -4070,15 +4252,175 @@ async function renderHmOrders() {
         + (j && Number(j.harga) ? '<span class="q-pr">' + (Number(j.harga) >= 1000 ? Math.round(j.harga / 1000) + 'rb' : j.harga) + '</span>' : '')
         + '</button>';
     }).join('') + '</div>' + shop + '</div>';
+  hmInitScroll(el);
 }
 function hmShort(n) { const w = String(n || '').trim().split(/\s+/); return (/^(bu|ibu|pak|bapak|kak|ci|cici|ko|koko|mas|mbak|om|tante|sis|bro)$/i.test(w[0]) && w[1]) ? w[0] + ' ' + w[1] : w[0]; }
 function hmTod() { const h = new Date().getHours(); return h >= 5 && h < 10 ? 'tod-pagi' : h < 15 && h >= 10 ? 'tod-siang' : h >= 15 && h < 18 ? 'tod-sore' : 'tod-malam'; }
 function hmVip(o) { const c = o.order_count || 1; if (c >= 25) return { b: '💎 ', crown: '👑' }; if (c >= 10) return { b: '🥇 ', crown: '👑' }; if (c >= 3) return { b: '🥈 ', crown: '' }; if (c >= 2 || o.priority) return { b: '⭐ ', crown: '' }; return { b: '', crown: '' }; }
 function hmDays(o) { return Math.floor((new Date(todayISO() + 'T00:00:00') - new Date(String(o.tgl_order).slice(0, 10) + 'T00:00:00')) / 864e5); }
 
+
+// ══ 5 gaya gambar karakter ══
+const CHAR_STYLES = [['chibi', '🙂 Chibi'], ['anime', '✨ Anime'], ['animal', '🐾 Hewan lucu'], ['pixel', '👾 Pixel 8-bit'], ['bean', '🫘 Kacang lucu']];
+function charStyle() { try { return localStorage.getItem('sppc_char') || 'chibi'; } catch (e) { return 'chibi'; } }
+function hmPerson(nama) {
+  const st = charStyle();
+  if (st === 'anime') return hmPersonAnime(nama);
+  if (st === 'animal' || st === 'stick') return hmPersonAnimal(nama);
+  if (st === 'pixel') return hmPersonPixel(nama);
+  if (st === 'bean') return hmPersonBean(nama);
+  return hmPersonChibi(nama);
+}
+function gantiGayaGambar() {
+  const cur = charStyle(); const i = (CHAR_STYLES.findIndex(function (x) { return x[0] === cur; }) + 1) % CHAR_STYLES.length;
+  try { localStorage.setItem('sppc_char', CHAR_STYLES[i][0]); } catch (e) {}
+  showToast('🎨 Gaya gambar: ' + CHAR_STYLES[i][1]); loadHome();
+}
+function hmPal(nama) {
+  const pick = function (arr, salt) { return arr[hmHash(nama, salt) % arr.length]; };
+  return { pick: pick,
+    skin: pick(['#f6d3b3', '#eebf98', '#d9a273', '#b97f55', '#8d5a3b'], 1),
+    hair: pick(['#2b1b14', '#4a2f1e', '#7a4b2a', '#c48a3c', '#1f1f1f', '#8c3b2f', '#e0b860', '#5b6ee1', '#e86a92'], 2),
+    shirt: pick(['#f28b82', '#fbbc04', '#81c995', '#78a9ff', '#c58af9', '#ff8bc1', '#4fc3c3', '#ff9e5e', '#9ad0ec'], 3),
+    pants: pick(['#3c4a6b', '#5b4636', '#2f2f3a', '#6b7a8f', '#8a5a44'], 4),
+    acc: pick(['none', 'glasses', 'cap', 'bow', 'headphones', 'crown', 'flower', 'none'], 6) };
+}
+function svgWrap(inner, extra) { return '<svg class="ps ' + (extra || '') + '" viewBox="0 0 40 60" width="40" height="60"><ellipse cx="20" cy="58" rx="10" ry="1.6" fill="#000" opacity=".12"/><g class="ps-b">' + inner + '</g></svg>'; }
+
+// ✨ Anime: mata besar berkilau, poni runcing, seragam dengan pita
+function hmPersonAnime(nama) {
+  const c = hmPal(nama), tie = c.pick(['#e53935', '#1e3a8a', '#f59e0b', '#7c3aed'], 9), long = hmHash(nama, 5) % 2;
+  const eyeC = c.pick(['#2563eb', '#7c3aed', '#059669', '#b45309', '#db2777'], 10);
+  let g = '';
+  g += '<rect x="16" y="41" width="3.6" height="14" rx="1.6" fill="#1f2937"/><rect x="20.4" y="41" width="3.6" height="14" rx="1.6" fill="#1f2937"/>';
+  g += '<path d="M14 54h6v2.5h-6zM20 54h6v2.5h-6z" fill="#3a2a22"/>';
+  g += '<path d="M13 41 L27 41 L29 48 L11 48Z" fill="' + c.pants + '"/>';
+  g += '<rect class="ps-al" x="10" y="27" width="3.4" height="12" rx="1.7" fill="#fff"/><circle cx="11.7" cy="39.5" r="1.7" fill="' + c.skin + '"/>';
+  g += '<g class="ps-ar"><rect x="26.6" y="27" width="3.4" height="12" rx="1.7" fill="#fff"/><circle cx="28.3" cy="39.5" r="1.7" fill="' + c.skin + '"/></g>';
+  g += '<path d="M13 26 Q20 24 27 26 L27.5 42 L12.5 42Z" fill="#fff" stroke="#e5e7eb" stroke-width=".5"/>';
+  g += '<path d="M16.5 25.5 L20 29 L23.5 25.5" fill="none" stroke="' + c.shirt + '" stroke-width="1.6"/><path d="M18.6 28 l1.4 4 l1.4 -4z" fill="' + tie + '"/>';
+  if (long) g += '<path d="M10.5 14 Q10 30 13 33 L15 22Z M29.5 14 Q30 30 27 33 L25 22Z" fill="' + c.hair + '"/>';
+  g += '<path d="M12 15 Q12 25 20 26 Q28 25 28 15 Q28 7 20 7 Q12 7 12 15Z" fill="' + c.skin + '"/>';
+  g += '<path d="M11 16 Q10 4 20 4.5 Q30 4 29 16 L27 11 L25.5 15 L23.5 9.5 L21.5 14.5 L19.5 9 L17 14.5 L15.5 10 L13 15Z" fill="' + c.hair + '"/>';
+  g += '<g class="ps-eye"><ellipse cx="16.6" cy="17.8" rx="2" ry="2.6" fill="' + eyeC + '"/><ellipse cx="23.4" cy="17.8" rx="2" ry="2.6" fill="' + eyeC + '"/><circle cx="17.2" cy="16.9" r=".8" fill="#fff"/><circle cx="24" cy="16.9" r=".8" fill="#fff"/><path d="M14.3 15.6 q2.3 -1.4 4.6 0 M21.1 15.6 q2.3 -1.4 4.6 0" fill="none" stroke="#2b1b14" stroke-width=".7"/></g>';
+  g += '<ellipse cx="14.8" cy="21" rx="1.5" ry=".8" fill="#ff8fa3" opacity=".55"/><ellipse cx="25.2" cy="21" rx="1.5" ry=".8" fill="#ff8fa3" opacity=".55"/>';
+  g += '<path d="M19 22.2 q1 .8 2 0" fill="none" stroke="#9a3b3b" stroke-width=".6" stroke-linecap="round"/>';
+  if (c.acc === 'bow' || c.acc === 'flower') g += '<g fill="' + tie + '" transform="translate(26 7)"><path d="M0 0 L-3.6 -2.6 L-3.6 2.6Z"/><path d="M0 0 L3.6 -2.6 L3.6 2.6Z"/><circle r="1"/></g>';
+  if (c.acc === 'headphones') g += '<path d="M11 15 Q11 3.5 20 3.5 Q29 3.5 29 15" fill="none" stroke="#333" stroke-width="1.4"/><rect x="9.2" y="13" width="3" height="5" rx="1.4" fill="' + tie + '"/><rect x="27.8" y="13" width="3" height="5" rx="1.4" fill="' + tie + '"/>';
+  if (c.acc === 'crown') g += '<path d="M15 5 L16.3 1.5 L18.4 4 L20 1 L21.6 4 L23.7 1.5 L25 5Z" fill="#f6c343"/>';
+  g += '<path d="M31 9 l.6 1.4 1.4 .6 -1.4 .6 -.6 1.4 -.6 -1.4 -1.4 -.6 1.4 -.6z" fill="#ffd54f" class="ps-eye"/>';
+  return svgWrap(g, 'st-anime');
+}
+
+// ✏️ Stickman: garis sederhana ala coretan
+function hmPersonStick(nama) {
+  const c = hmPal(nama), col = c.shirt, ink = '#2b1b14';
+  let g = '<g fill="none" stroke="' + ink + '" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">';
+  g += '<path d="M20 26 L20 41"/><path d="M20 41 L15 55 M20 41 L25 55"/>';
+  g += '<path class="ps-al" d="M20 29 L13 37"/>';
+  g += '</g><g class="ps-ar"><path d="M20 29 L27 37" fill="none" stroke="' + ink + '" stroke-width="1.8" stroke-linecap="round"/></g>';
+  g += '<path d="M15.5 27 Q20 24.5 24.5 27 L23.5 36 L16.5 36Z" fill="' + col + '" opacity=".85"/>';
+  g += '<circle cx="20" cy="16.5" r="7.5" fill="#fff" stroke="' + ink + '" stroke-width="1.8"/>';
+  g += '<g class="ps-eye"><circle cx="17.5" cy="16" r="1" fill="' + ink + '"/><circle cx="22.5" cy="16" r="1" fill="' + ink + '"/></g>';
+  g += '<path d="M17.6 19.5 Q20 21.4 22.4 19.5" fill="none" stroke="' + ink + '" stroke-width="1.1" stroke-linecap="round"/>';
+  const hs = hmHash(nama, 5) % 4;
+  if (hs === 0) g += '<path d="M14 12 Q17 6 20 9 Q23 5 26 12" fill="none" stroke="' + ink + '" stroke-width="1.6" stroke-linecap="round"/>';
+  if (hs === 1) g += '<path d="M16 9.5 L15 6 M20 9 L20 5 M24 9.5 L25 6" stroke="' + ink + '" stroke-width="1.5" stroke-linecap="round"/>';
+  if (hs === 2) g += '<path d="M12.6 15 Q13 8.2 20 8.6 Q27 8.2 27.4 15 Q24 11 20 11.4 Q16 11 12.6 15Z" fill="' + c.hair + '"/>';
+  if (c.acc === 'cap') g += '<path d="M12.5 13 Q13 7 20 7 Q27 7 27.5 13Z" fill="' + col + '" stroke="' + ink + '" stroke-width="1.2"/><path d="M20 12.6 L31 12.6" stroke="' + ink + '" stroke-width="1.6" stroke-linecap="round"/>';
+  if (c.acc === 'glasses') g += '<g fill="none" stroke="' + ink + '" stroke-width=".9"><circle cx="17.5" cy="16" r="2.2"/><circle cx="22.5" cy="16" r="2.2"/></g>';
+  if (c.acc === 'crown') g += '<path d="M15.5 9.5 L16.5 5.5 L18.5 8 L20 4.5 L21.5 8 L23.5 5.5 L24.5 9.5Z" fill="#f6c343" stroke="' + ink + '" stroke-width=".8"/>';
+  if (c.acc === 'bow') g += '<path d="M24 9 l-3 -2 v4z M24 9 l3 -2 v4z" fill="#ff4f8b" stroke="' + ink + '" stroke-width=".6"/>';
+  return svgWrap(g, 'st-stick');
+}
+
+
+// 🐾 Hewan lucu: kucing / beruang / kelinci / rubah / panda berdiri pakai baju
+function hmPersonAnimal(nama) {
+  const c = hmPal(nama);
+  const kind = c.pick(['cat', 'bear', 'bunny', 'fox', 'panda', 'dog'], 11);
+  const fur = { cat: c.pick(['#f4b26b', '#9e9e9e', '#ffffff', '#3a3a3a', '#d9a066'], 12), bear: c.pick(['#a0704a', '#7b5135', '#c99a6a'], 12), bunny: c.pick(['#ffffff', '#f3e5d8', '#d7c4b4'], 12), fox: '#f08a3c', panda: '#ffffff', dog: c.pick(['#e8c39e', '#c8925f', '#f5f0e8'], 12) }[kind];
+  const ink = '#2b1b14', light = (kind === 'panda' || fur === '#ffffff') ? '#f2f2f2' : '#fff6ea';
+  const earIn = '#ffb3c1';
+  let ears = '';
+  if (kind === 'cat') ears = '<path d="M12.5 11 L13 2.5 L19 8Z M27.5 11 L27 2.5 L21 8Z" fill="' + fur + '"/><path d="M14 9 L14.3 4.8 L17.3 7.6Z M26 9 L25.7 4.8 L22.7 7.6Z" fill="' + earIn + '"/>';
+  if (kind === 'fox') ears = '<path d="M12 12 L12 1.5 L19.5 8Z M28 12 L28 1.5 L20.5 8Z" fill="' + fur + '"/><path d="M13.6 9.5 L13.6 4.5 L17.4 7.8Z M26.4 9.5 L26.4 4.5 L22.6 7.8Z" fill="#fff"/>';
+  if (kind === 'bear') ears = '<circle cx="13" cy="8" r="3.4" fill="' + fur + '"/><circle cx="27" cy="8" r="3.4" fill="' + fur + '"/><circle cx="13" cy="8" r="1.7" fill="' + earIn + '"/><circle cx="27" cy="8" r="1.7" fill="' + earIn + '"/>';
+  if (kind === 'panda') ears = '<circle cx="13" cy="8" r="3.4" fill="#1f1f1f"/><circle cx="27" cy="8" r="3.4" fill="#1f1f1f"/>';
+  if (kind === 'bunny') ears = '<ellipse cx="16" cy="3" rx="2.4" ry="7" fill="' + fur + '" transform="rotate(-10 16 3)"/><ellipse cx="24" cy="3" rx="2.4" ry="7" fill="' + fur + '" transform="rotate(12 24 3)"/><ellipse cx="16" cy="3.5" rx="1.1" ry="5" fill="' + earIn + '" transform="rotate(-10 16 3)"/><ellipse cx="24" cy="3.5" rx="1.1" ry="5" fill="' + earIn + '" transform="rotate(12 24 3)"/>';
+  if (kind === 'dog') ears = '<ellipse cx="11.6" cy="14" rx="2.6" ry="5.5" fill="' + c.pick(['#8a5a3a', '#5d4037', '#c8925f'], 13) + '" transform="rotate(18 11.6 14)"/><ellipse cx="28.4" cy="14" rx="2.6" ry="5.5" fill="' + c.pick(['#8a5a3a', '#5d4037', '#c8925f'], 13) + '" transform="rotate(-18 28.4 14)"/>';
+  let g = '';
+  g += '<ellipse cx="16.6" cy="55" rx="3.4" ry="2" fill="' + fur + '" stroke="#e0d6c8" stroke-width=".4"/><ellipse cx="23.4" cy="55" rx="3.4" ry="2" fill="' + fur + '" stroke="#e0d6c8" stroke-width=".4"/>';
+  g += '<rect x="14.6" y="40" width="4.4" height="14" rx="2" fill="' + c.pants + '"/><rect x="21" y="40" width="4.4" height="14" rx="2" fill="' + c.pants + '"/>';
+  if (kind === 'fox' || kind === 'cat' || kind === 'dog') g += '<path d="M27 44 Q35 42 33 33 Q31 39 27 40Z" fill="' + fur + '"/>' + (kind === 'fox' ? '<path d="M33 33 Q34.5 36 32.4 37.6 Q32.4 35 33 33Z" fill="#fff"/>' : '');
+  if (kind === 'bunny') g += '<circle cx="27.6" cy="42" r="2.4" fill="#fff"/>';
+  g += '<rect class="ps-al" x="8.6" y="26" width="4.2" height="13" rx="2.1" fill="' + c.shirt + '"/><circle cx="10.7" cy="39.5" r="2.1" fill="' + fur + '"/>';
+  g += '<g class="ps-ar"><rect x="27.2" y="26" width="4.2" height="13" rx="2.1" fill="' + c.shirt + '"/><circle cx="29.3" cy="39.5" r="2.1" fill="' + fur + '"/></g>';
+  g += '<rect x="12" y="24" width="16" height="18" rx="5.5" fill="' + c.shirt + '"/>';
+  g += '<ellipse cx="20" cy="33" rx="4" ry="5" fill="#fff" opacity=".22"/>';
+  g += ears;
+  g += '<ellipse cx="20" cy="16" rx="9" ry="8.4" fill="' + fur + '"' + (fur === '#ffffff' ? ' stroke="#e6e0d6" stroke-width=".5"' : '') + '/>';
+  if (kind === 'panda') g += '<ellipse cx="16.6" cy="16.4" rx="2.4" ry="2.9" fill="#1f1f1f" transform="rotate(-20 16.6 16.4)"/><ellipse cx="23.4" cy="16.4" rx="2.4" ry="2.9" fill="#1f1f1f" transform="rotate(20 23.4 16.4)"/>';
+  if (kind === 'fox') g += '<path d="M11.5 17 Q16 25 20 24.6 Q24 25 28.5 17 Q24 21 20 21 Q16 21 11.5 17Z" fill="#fff"/>';
+  g += '<ellipse cx="20" cy="20" rx="4" ry="3" fill="' + light + '"/>';
+  g += '<g class="ps-eye"><circle cx="16.8" cy="16.4" r="1.15" fill="' + (kind === 'panda' ? '#fff' : ink) + '"/><circle cx="23.2" cy="16.4" r="1.15" fill="' + (kind === 'panda' ? '#fff' : ink) + '"/></g>';
+  g += '<path d="M19 18.6 h2 l-1 1.2z" fill="' + (kind === 'bunny' || kind === 'cat' ? '#ff8fa3' : ink) + '"/>';
+  g += '<path d="M18.4 20.6 q.8 .9 1.6 0 q.8 .9 1.6 0" fill="none" stroke="' + ink + '" stroke-width=".6" stroke-linecap="round"/>';
+  if (kind === 'cat') g += '<path d="M12 19 h4 M12 20.6 l4 -.6 M28 19 h-4 M28 20.6 l-4 -.6" stroke="' + ink + '" stroke-width=".35" opacity=".6"/>';
+  g += '<circle cx="14.6" cy="19.4" r="1.3" fill="#ff8a8a" opacity=".4"/><circle cx="25.4" cy="19.4" r="1.3" fill="#ff8a8a" opacity=".4"/>';
+  if (c.acc === 'glasses') g += '<g fill="none" stroke="' + ink + '" stroke-width=".8"><circle cx="16.8" cy="16.4" r="2.3"/><circle cx="23.2" cy="16.4" r="2.3"/><path d="M19.1 16.4h1.8"/></g>';
+  if (c.acc === 'bow' || c.acc === 'flower') g += '<g fill="#ff4f8b" transform="translate(25.5 9.5)"><path d="M0 0 L-3.4 -2.4 L-3.4 2.4Z"/><path d="M0 0 L3.4 -2.4 L3.4 2.4Z"/><circle r="1"/></g>';
+  if (c.acc === 'crown') g += '<path d="M15 8.5 L16.3 4 L18.4 7 L20 3 L21.6 7 L23.7 4 L25 8.5Z" fill="#f6c343" stroke="#d49b1e" stroke-width=".4"/>';
+  if (c.acc === 'cap') g += '<path d="M12 11.5 Q12.5 5 20 5 Q27.5 5 28 11.5Z" fill="' + c.pick(['#e53935', '#1e88e5', '#43a047'], 8) + '"/><rect x="20" y="10.2" width="10.5" height="2" rx="1" fill="#333" opacity=".85"/>';
+  if (c.acc === 'headphones') g += '<path d="M10.8 16 Q10.8 5 20 5 Q29.2 5 29.2 16" fill="none" stroke="#444" stroke-width="1.5"/><rect x="9" y="14" width="3.4" height="5.5" rx="1.5" fill="#ff7043"/><rect x="27.6" y="14" width="3.4" height="5.5" rx="1.5" fill="#ff7043"/>';
+  return svgWrap(g, 'st-animal');
+}
+
+// 👾 Pixel 8-bit: digambar kotak-kotak
+function hmPersonPixel(nama) {
+  const c = hmPal(nama), P = 3.2, ox = 4, oy = 4;
+  const map = hmHash(nama, 5) % 2 ? [
+    '..HHHHHH..', '.HHHHHHHH.', '.HSSSSSSH.', '.SSESSESS.', '.SSSSSSSS.', '..SSMMSS..', '...SSSS...',
+    '.TTTTTTTT.', 'STTTTTTTTA', 'STTTTTTTTA', 'S.TTTTTT.A', '..PPPPPP..', '..PP..PP..', '..PP..PP..', '.BBB..BBB.'] : [
+    '..HHHHHH..', '.HHHHHHHH.', 'HHSSSSSSHH', 'HSSESSESSH', 'HSSSSSSSSH', 'H.SSMMSS.H', '...SSSS...',
+    '.TTTTTTTT.', 'STTTTTTTTA', 'STTTTTTTTA', 'S.TTTTTT.A', '..PPPPPP..', '..PP..PP..', '..PP..PP..', '.BBB..BBB.'];
+  const col = { H: c.hair, S: c.skin, E: '#1f1f1f', M: '#c0392b', T: c.shirt, P: c.pants, B: '#3a2a22', A: c.skin };
+  let body = '', arm = '';
+  map.forEach(function (row, y) { row.split('').forEach(function (ch, x) {
+    if (ch === '.') return; const r = '<rect x="' + (ox + x * P) + '" y="' + (oy + y * P * 0.98) + '" width="' + (P + .05) + '" height="' + (P + .05) + '" fill="' + col[ch] + '"' + (ch === 'E' ? ' class="ps-eye"' : '') + '/>';
+    if (ch === 'A') arm += r; else body += r; }); });
+  if (c.acc === 'crown') body += '<rect x="' + (ox + 3 * P) + '" y="' + (oy - P) + '" width="' + (4 * P) + '" height="' + P + '" fill="#f6c343"/>';
+  if (c.acc === 'cap') body += '<rect x="' + (ox + 1 * P) + '" y="' + oy + '" width="' + (8 * P) + '" height="' + P + '" fill="#e53935"/><rect x="' + (ox + 7 * P) + '" y="' + (oy + P) + '" width="' + (3 * P) + '" height="' + (P * .6) + '" fill="#b71c1c"/>';
+  if (c.acc === 'glasses') body += '<rect x="' + (ox + 2 * P) + '" y="' + (oy + 3 * P * .98) + '" width="' + (6 * P) + '" height="' + (P * .45) + '" fill="#1f1f1f"/>';
+  return '<svg class="ps st-pixel" viewBox="0 0 40 60" width="40" height="60" shape-rendering="crispEdges"><rect x="9" y="56" width="22" height="2" fill="#000" opacity=".12"/><g class="ps-b">' + body + '<g class="ps-ar">' + arm + '</g></g></svg>';
+}
+
+// 🫘 Kacang lucu: badan bulat seperti mochi
+function hmPersonBean(nama) {
+  const c = hmPal(nama), col = c.shirt;
+  let g = '<ellipse cx="16" cy="54.5" rx="3.2" ry="2" fill="#3a2a22"/><ellipse cx="24" cy="54.5" rx="3.2" ry="2" fill="#3a2a22"/>';
+  g += '<ellipse class="ps-al" cx="8.6" cy="36" rx="2.6" ry="4.2" fill="' + col + '" transform="rotate(20 8.6 36)"/>';
+  g += '<g class="ps-ar"><ellipse cx="31.4" cy="36" rx="2.6" ry="4.2" fill="' + col + '" transform="rotate(-20 31.4 36)"/></g>';
+  g += '<path d="M20 9 C30 9 32 20 32 34 C32 48 28 54 20 54 C12 54 8 48 8 34 C8 20 10 9 20 9Z" fill="' + col + '"/>';
+  g += '<path d="M12 22 C12 14 15 12 20 12 C26 12 28 15 28 22 C28 29 25 31 20 31 C15 31 12 29 12 22Z" fill="#fff" opacity=".9"/>';
+  g += '<g class="ps-eye"><ellipse cx="17" cy="21" rx="1.4" ry="1.9" fill="#2b1b14"/><ellipse cx="23" cy="21" rx="1.4" ry="1.9" fill="#2b1b14"/><circle cx="17.5" cy="20.3" r=".5" fill="#fff"/><circle cx="23.5" cy="20.3" r=".5" fill="#fff"/></g>';
+  g += '<circle cx="14.6" cy="24.5" r="1.5" fill="#ff8a8a" opacity=".55"/><circle cx="25.4" cy="24.5" r="1.5" fill="#ff8a8a" opacity=".55"/>';
+  g += '<path d="M18.6 25.4 q1.4 1.3 2.8 0" fill="none" stroke="#7a3b2a" stroke-width=".8" stroke-linecap="round"/>';
+  g += '<path d="M15 40 h10" stroke="#fff" stroke-width="1" opacity=".35" stroke-linecap="round"/>';
+  const top = hmHash(nama, 5) % 3;
+  if (top === 0) g += '<path d="M20 9 q-1 -4 2 -6" fill="none" stroke="#3f7d3f" stroke-width="1.2"/><path d="M21.6 3.4 q4 -1 4 2.4 q-3 1 -4 -2.4z" fill="#6abf69"/>';
+  if (top === 1) g += '<circle cx="20" cy="7.5" r="2.2" fill="' + c.hair + '"/>';
+  if (c.acc === 'crown') g += '<path d="M15 10 L16.3 5.5 L18.4 8.5 L20 4.5 L21.6 8.5 L23.7 5.5 L25 10Z" fill="#f6c343"/>';
+  if (c.acc === 'cap') g += '<path d="M11 16 Q12 7.5 20 7.5 Q28 7.5 29 16Z" fill="' + c.hair + '"/><rect x="20" y="14.6" width="12" height="2.2" rx="1.1" fill="#333" opacity=".85"/>';
+  if (c.acc === 'glasses') g += '<g fill="none" stroke="#2b1b14" stroke-width=".8"><circle cx="17" cy="21" r="2.6"/><circle cx="23" cy="21" r="2.6"/></g>';
+  if (c.acc === 'bow') g += '<g fill="#ff4f8b" transform="translate(25.5 11)"><path d="M0 0 L-3.4 -2.4 L-3.4 2.4Z"/><path d="M0 0 L3.4 -2.4 L3.4 2.4Z"/><circle r="1"/></g>';
+  if (c.acc === 'headphones') g += '<path d="M10 22 Q10 6 20 6 Q30 6 30 22" fill="none" stroke="#444" stroke-width="1.5"/><rect x="7.8" y="19" width="3.4" height="6" rx="1.6" fill="#ff7043"/><rect x="28.8" y="19" width="3.4" height="6" rx="1.6" fill="#ff7043"/>';
+  return svgWrap(g, 'st-bean');
+}
+
 // ── Karakter orang berdiri (acak tapi tetap per customer) ──
 function hmHash(str, salt) { let h = 2166136261 ^ (salt || 0); String(str || '').toLowerCase().split('').forEach(function (c) { h = Math.imul(h ^ c.charCodeAt(0), 16777619) >>> 0; }); return h >>> 0; }
-function hmPerson(nama) {
+function hmPersonChibi(nama) {
   const pick = function (arr, salt) { return arr[hmHash(nama, salt) % arr.length]; };
   const skin = pick(['#f6d3b3', '#eebf98', '#d9a273', '#b97f55', '#8d5a3b'], 1);
   const hairC = pick(['#2b1b14', '#4a2f1e', '#7a4b2a', '#c48a3c', '#1f1f1f', '#8c3b2f', '#e0b860'], 2);
@@ -4149,9 +4491,13 @@ function hmSelesai(id) {
   const j = HM_JUAL.filter(function (x) { return x.order_id === id && String(x.tanggal) >= String(o.tgl_order); }).pop();
   const st = hmStatus(o), w = naWa4(o);
   let sh = document.getElementById('hm-pop'); if (!sh) { sh = document.createElement('div'); sh.id = 'hm-pop'; sh.className = 'act-sheet'; sh.onclick = function (e) { if (e.target === sh) sh.classList.remove('open'); }; document.body.appendChild(sh); }
-  sh.innerHTML = '<div class="act-box hm-pop-box"><div class="hm-pop-top"><div class="hm-pop-av">' + hmPerson(o.nama) + '</div><div><b>' + lapEsc(o.nama) + (w ? ' <small>·' + w + '</small>' : '') + '</b><span class="hm-st ' + st.c + '">' + st.t + '</span></div></div>'
-    + '<div class="qi-lbl">Harga jasa</div><input id="hm-pop-inp" type="text" inputmode="numeric" placeholder="cth. 50000 / 50rb" value="' + (j && Number(j.harga) ? Number(j.harga) : '') + '" onkeydown="if(event.key===\'Enter\')hmKonfirm(' + id + ')">'
-    + '<div style="display:flex;gap:8px;margin-top:12px"><button class="qi-save" style="flex:1" onclick="hmKonfirm(' + id + ')">🎉 Tandai selesai</button><button class="btn-sm" onclick="document.getElementById(\'hm-pop\').classList.remove(\'open\')">Batal</button></div></div>';
+  sh.innerHTML = '<div class="act-box hm-pop-box">'
+    + '<button class="hm-pop-x" aria-label="Tutup" onclick="document.getElementById(\'hm-pop\').classList.remove(\'open\')">✕</button>'
+    + '<div class="hm-pop-top"><div class="hm-pop-av">' + hmPerson(o.nama) + '</div><div class="hm-pop-info"><b>' + lapEsc(o.nama) + '</b>' + (w ? '<small>WA ·' + w + '</small>' : '') + '<span class="hm-st ' + st.c + '">' + st.t + '</span></div></div>'
+    + '<div class="qi-lbl">Harga jasa</div>'
+    + '<div class="hm-pop-nom"><span>Rp</span><input id="hm-pop-inp" type="text" inputmode="numeric" placeholder="0" value="' + (j && Number(j.harga) ? Number(j.harga).toLocaleString('id-ID') : '') + '" onkeydown="if(event.key===\'Enter\')hmKonfirm(' + id + ')"></div>'
+    + '<div class="hm-pop-q">' + ['25rb', '50rb', '75rb', '100rb'].map(function (q) { return '<button type="button" onclick="document.getElementById(\'hm-pop-inp\').value=\'' + q + '\'">' + q + '</button>'; }).join('') + '</div>'
+    + '<button class="hm-pop-go" onclick="hmKonfirm(' + id + ')">✓ Selesai &amp; simpan</button></div>';
   sh.classList.add('open');
   setTimeout(function () { const i = document.getElementById('hm-pop-inp'); if (i) i.focus(); }, 80);
 }
